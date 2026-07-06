@@ -21,9 +21,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Curso Brigada de Incêndio e Lei Lucas | ProAttive",
+  title: "ProAttive Treinamentos",
   description:
-    "Treinamento certificado em conformidade com a Lei 13.722/18 e NR-23.",
+    "Cursos, mentoria e consultoria especializada em segurança contra incêndio.",
 };
 
 export default function RootLayout({

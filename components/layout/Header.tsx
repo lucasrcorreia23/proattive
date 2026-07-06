@@ -2,16 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { assets } from "@/lib/assets";
-import { NAV_LINKS, QUOTE_SECTION_ID, SITE } from "@/lib/constants";
-
-function scrollToContact() {
-  document.getElementById(QUOTE_SECTION_ID)?.scrollIntoView({ behavior: "smooth" });
-}
+import {
+  MATRICULA_PATH,
+  MATRICULA_QUOTE_HREF,
+  NAV_LINKS,
+  QUOTE_SECTION_ID,
+  SITE,
+} from "@/lib/constants";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -34,6 +37,18 @@ function InstagramIcon({ className }: { className?: string }) {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  function handleContact() {
+    // Na landing do curso, o quote wizard existe na própria página → scroll suave.
+    // Nas demais páginas (ex.: nova home), navega até a seção na página realocada.
+    if (pathname === MATRICULA_PATH) {
+      document.getElementById(QUOTE_SECTION_ID)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      router.push(MATRICULA_QUOTE_HREF);
+    }
+  }
 
   return (
     <header className="relative border-b border-white/60 bg-white/75 backdrop-blur-md">
@@ -95,7 +110,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <Button variant="default" className="shrink-0 uppercase" onClick={scrollToContact}>
+          <Button variant="default" className="shrink-0 uppercase" onClick={handleContact}>
             ENTRE EM CONTATO
           </Button>
         </div>
@@ -144,7 +159,7 @@ export function Header() {
               className="mt-2 uppercase"
               onClick={() => {
                 setOpen(false);
-                scrollToContact();
+                handleContact();
               }}
             >
               ENTRE EM CONTATO

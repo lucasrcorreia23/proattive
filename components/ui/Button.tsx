@@ -14,6 +14,15 @@ const variantClasses: Record<ButtonVariant, string> = {
   disabled: "bg-disabled text-white cursor-not-allowed",
 };
 
+/** Classes compartilhadas da pílula (usadas por Button e ButtonLink). */
+export function buttonClasses(variant: ButtonVariant = "default", className?: string) {
+  return cn(
+    "inline-flex h-10 items-center justify-center rounded-pill px-6 text-xs font-bold transition-colors",
+    variantClasses[variant],
+    className,
+  );
+}
+
 export function Button({
   variant = "default",
   className,
@@ -27,11 +36,7 @@ export function Button({
     <button
       type="button"
       disabled={isDisabled}
-      className={cn(
-        "inline-flex h-10 items-center justify-center rounded-pill px-6 text-xs font-bold transition-colors",
-        variantClasses[isDisabled ? "disabled" : variant],
-        className,
-      )}
+      className={buttonClasses(isDisabled ? "disabled" : variant, className)}
       {...props}
     >
       {children}

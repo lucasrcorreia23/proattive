@@ -29,3 +29,7 @@ export const ANCHOR_LINKS = [
 ] as const;
 
 export const QUOTE_SECTION_ID = "orcamento";
+
+/** Rota da landing do curso (página realocada) e destino dos CTAs da home. */
+export const MATRICULA_PATH = "/matricula";
+export const MATRICULA_QUOTE_HREF = `${MATRICULA_PATH}#${QUOTE_SECTION_ID}`;

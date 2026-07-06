@@ -3,6 +3,7 @@ export const assets = {
     main: "/images/logo-proattive.png",
     full: "/images/logo-proattive-full.png",
     treinamentos: "/images/logo-treinamentos.svg",
+    treinamentosFull: "/images/logo-proattive-treinamentos.png",
   },
   hero: {
     polygonLeft: "/images/hero-polygon-left-v2.png",
@@ -13,6 +14,11 @@ export const assets = {
   sections: {
     audience: "/images/audience.jpg",
     finalCta: "/images/final-cta.jpg",
+  },
+  courses: {
+    brigada: "/images/curso-brigada.jpg",
+    eletricos: "/images/curso-eletricos.jpg",
+    preventivo: "/images/curso-preventivo.jpg",
   },
   icons: {
     law: "/icons/law.png",
