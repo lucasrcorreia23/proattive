@@ -4,7 +4,7 @@ import { CtaBandSection } from "@/components/home/CtaBandSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { Header } from "@/components/layout/Header";
 import { assets } from "@/lib/assets";
-import { MATRICULA_QUOTE_HREF } from "@/lib/constants";
+import { arieleWhatsappHref, MATRICULA_QUOTE_HREF } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "ProAttive Treinamentos | Cursos e Consultoria em Segurança Contra Incêndio",
@@ -20,6 +20,8 @@ type CourseSection = {
   title: string;
   subtitle: string;
   bullets: CourseBullet[];
+  ctaHref: string;
+  ctaExternal?: boolean;
 };
 
 const COURSES: CourseSection[] = [
@@ -48,6 +50,10 @@ const COURSES: CourseSection[] = [
           "Monitores, instrutores de academias, buffets infantis e profissionais de lazer.",
       },
     ],
+    ctaHref: arieleWhatsappHref(
+      "Olá! Tenho interesse no Curso Brigada de Incêndio e Lei Lucas.",
+    ),
+    ctaExternal: true,
   },
   {
     imageSrc: assets.courses.eletricos,
@@ -64,6 +70,11 @@ const COURSES: CourseSection[] = [
           "Profissionais que precisam entender as características do incêndio em baterias de lítio, dominar os requisitos gerais do SAVE e aprender o passo a passo definitivo para montar um Projeto Baseado em Desempenho (PBD) sem travar nas exigências do Corpo de Bombeiros.",
       },
     ],
+    // TODO(Ariele): trocar para HOTMART_CARROS_ELETRICOS_HREF quando o link chegar.
+    ctaHref: arieleWhatsappHref(
+      "Olá! Tenho interesse no Curso de Regularização de Locais com Carros Elétricos.",
+    ),
+    ctaExternal: true,
   },
   {
     imageSrc: assets.courses.preventivo,
@@ -90,6 +101,10 @@ const COURSES: CourseSection[] = [
           "Especialistas responsáveis pelo compliance de empresas, implantação de planos de emergência e gestão de vistorias anuais para a geração de receita recorrente com alvarás.",
       },
     ],
+    ctaHref: arieleWhatsappHref(
+      "Olá! Tenho interesse no Curso de Qualificação ao Projeto Preventivo.",
+    ),
+    ctaExternal: true,
   },
 ];
 
@@ -103,12 +118,11 @@ export default function Home() {
             key={course.title}
             {...course}
             ctaLabel="MATRICULE-SE AGORA"
-            ctaHref={MATRICULA_QUOTE_HREF}
           />
         ))}
 
         <CtaBandSection
-          theme="surface"
+          theme="white"
           title="Mentoria Direcionada"
           ctaLabel="ENTRE EM CONTATO CONOSCO"
           ctaHref={MATRICULA_QUOTE_HREF}

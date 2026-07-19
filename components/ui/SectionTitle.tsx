@@ -18,7 +18,7 @@ export function SectionTitle({
       <h2
         className={cn(
           "text-[32px] font-semibold leading-tight",
-          dark ? "text-text" : "text-white",
+          dark ? "text-brand" : "text-white",
         )}
       >
         {title}
@@ -27,7 +27,7 @@ export function SectionTitle({
         <p
           className={cn(
             "max-w-3xl text-base font-light leading-7",
-            dark ? "text-muted" : "text-white",
+            dark ? "text-brand/70" : "text-white",
           )}
         >
           {subtitle}

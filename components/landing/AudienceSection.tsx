@@ -45,7 +45,7 @@ export function AudienceSection() {
             <h2 className="mb-4 text-3xl font-semibold text-brand">
               Para quem é este treinamento?
             </h2>
-            <p className="text-base leading-7 text-text/80">
+            <p className="text-base leading-7 text-brand/80">
               Uma solução completa para profissionais e empresas que buscam
               conformidade com a legislação vigente e máxima segurança.
             </p>
@@ -57,7 +57,7 @@ export function AudienceSection() {
                 <span className="text-xl font-semibold text-accent">{item.number}</span>
                 <div>
                   <h3 className="text-lg font-semibold text-brand">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-text/80">{item.description}</p>
+                  <p className="mt-2 text-sm leading-6 text-brand/80">{item.description}</p>
                 </div>
               </div>
             ))}

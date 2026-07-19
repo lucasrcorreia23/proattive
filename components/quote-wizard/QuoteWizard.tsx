@@ -9,6 +9,7 @@ import {
   isQuoteResult,
   validateStep,
 } from "@/lib/quote-flow/engine";
+import { buildPessoaFisicaResult } from "@/lib/quote-flow/pricing";
 import type { QuoteResult, QuoteState } from "@/lib/quote-flow/types";
 import { FilterResultModal } from "./FilterResultModal";
 import { StepRenderer } from "./StepRenderer";
@@ -30,6 +31,11 @@ export function QuoteWizard() {
   if (!step) return null;
 
   function handleChange(fieldId: string, value: string) {
+    // Pessoa Física: abre o popup de compra única imediatamente, sem preencher campos.
+    if (fieldId === "perfil" && value === "pessoa_fisica") {
+      setResult(buildPessoaFisicaResult());
+      return;
+    }
     setState((current) => ({
       ...current,
       answers: { ...current.answers, [fieldId]: value },

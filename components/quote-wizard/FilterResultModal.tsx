@@ -11,8 +11,11 @@ type FilterResultModalProps = {
 
 export function FilterResultModal({ result, onClose }: FilterResultModalProps) {
   function handleCta() {
-    console.log("Quote submitted:", result);
-    window.alert("Orçamento enviado com sucesso! Em breve entraremos em contato.");
+    // Compra direta (Pessoa Física): apenas abre o link, sem mensagem de orçamento.
+    if (!result.hideSummary) {
+      console.log("Quote submitted:", result);
+      window.alert("Orçamento enviado com sucesso! Em breve entraremos em contato.");
+    }
     window.open(result.ctaHref, "_blank", "noopener,noreferrer");
     onClose();
   }
@@ -34,13 +37,15 @@ export function FilterResultModal({ result, onClose }: FilterResultModalProps) {
             {result.title}
           </h3>
 
-          <div className="rounded-card bg-brand/10 p-4 text-center font-[family-name:var(--font-inter)] text-lg text-brand">
-            {result.summary.map((item) => (
-              <p key={item.label}>
-                {item.label}: <strong>{item.value}</strong>
-              </p>
-            ))}
-          </div>
+          {!result.hideSummary && (
+            <div className="rounded-card bg-brand/10 p-4 text-center font-[family-name:var(--font-inter)] text-lg text-brand">
+              {result.summary.map((item) => (
+                <p key={item.label}>
+                  {item.label}: <strong>{item.value}</strong>
+                </p>
+              ))}
+            </div>
+          )}
 
           {result.info && (
             <p className="text-center font-[family-name:var(--font-inter)] text-lg font-medium text-brand">
@@ -53,9 +58,11 @@ export function FilterResultModal({ result, onClose }: FilterResultModalProps) {
             </p>
           )}
 
-          <p className="text-center font-[family-name:var(--font-inter)] text-4xl font-extrabold tracking-tight text-brand">
-            {result.priceLabel}
-          </p>
+          {!result.hidePrice && (
+            <p className="text-center font-[family-name:var(--font-inter)] text-4xl font-extrabold tracking-tight text-brand">
+              {result.priceLabel}
+            </p>
+          )}
 
           <Button
             variant="default"

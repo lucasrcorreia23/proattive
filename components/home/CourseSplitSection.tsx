@@ -17,6 +17,8 @@ type CourseSplitSectionProps = {
   bullets: CourseBullet[];
   ctaLabel: string;
   ctaHref: string;
+  /** Quando true, abre o link em nova aba (WhatsApp/Hotmart e outros destinos externos). */
+  ctaExternal?: boolean;
 };
 
 export function CourseSplitSection({
@@ -29,6 +31,7 @@ export function CourseSplitSection({
   bullets,
   ctaLabel,
   ctaHref,
+  ctaExternal = false,
 }: CourseSplitSectionProps) {
   return (
     <section className={cn(bg === "surface" ? "bg-brand-surface" : "bg-white")}>
@@ -74,7 +77,13 @@ export function CourseSplitSection({
               ))}
             </ul>
 
-            <ButtonLink href={ctaHref} className="self-start">
+            <ButtonLink
+              href={ctaHref}
+              className="self-start"
+              {...(ctaExternal
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+            >
               {ctaLabel}
             </ButtonLink>
           </div>

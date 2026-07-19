@@ -75,7 +75,7 @@ export function ModulesSection() {
           <h2 className="text-4xl font-semibold leading-tight text-brand">
             O que você vai dominar no treinamento
           </h2>
-          <p className="text-base leading-7 text-text/80">
+          <p className="text-base leading-7 text-brand/80">
             Tudo o que você precisa saber sobre prevenção de acidentes, combate a
             incêndio e primeiros socorros em um único treinamento certificado.
           </p>

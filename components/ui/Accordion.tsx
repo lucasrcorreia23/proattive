@@ -54,7 +54,7 @@ export function Accordion({
               onClick={() => toggle(item.id)}
               className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
             >
-              <span className="text-sm font-medium text-text">{item.title}</span>
+              <span className="text-sm font-medium text-brand">{item.title}</span>
               <ChevronDown
                 className={cn(
                   "size-5 shrink-0 text-accent transition-transform",
@@ -63,7 +63,7 @@ export function Accordion({
               />
             </button>
             {isOpen && (
-              <div className="border-t border-border px-5 pb-5 pt-2 text-sm leading-6 text-text/80">
+              <div className="border-t border-border px-5 pb-5 pt-2 text-sm leading-6 text-brand/80">
                 {item.content}
               </div>
             )}

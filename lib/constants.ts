@@ -33,3 +33,19 @@ export const QUOTE_SECTION_ID = "orcamento";
 /** Rota da landing do curso (página realocada) e destino dos CTAs da home. */
 export const MATRICULA_PATH = "/matricula";
 export const MATRICULA_QUOTE_HREF = `${MATRICULA_PATH}#${QUOTE_SECTION_ID}`;
+
+/** Contato comercial da Ariele (Proattive) para captação dos cursos. */
+export const ARIELE_WHATSAPP = "5548991664962";
+
+/** Monta o link do WhatsApp da Ariele com uma mensagem opcional pré-preenchida. */
+export function arieleWhatsappHref(message?: string) {
+  const base = `https://wa.me/${ARIELE_WHATSAPP}`;
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
+
+/**
+ * TODO(Ariele): substituir pelo link real da Hotmart (curso Carros Elétricos /
+ * compra única da Pessoa Física). Enquanto não chega, os CTAs de Carros Elétricos
+ * e da Pessoa Física apontam para o WhatsApp da Ariele (ver app/page.tsx e pricing.ts).
+ */
+export const HOTMART_CARROS_ELETRICOS_HREF = "";

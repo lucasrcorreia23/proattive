@@ -28,30 +28,26 @@ const QTD_FUNCIONARIOS = [
   { value: "51+", label: "Acima de 50 colaboradores" },
 ];
 
-const TIPO_CONDOMINIO = [
-  { value: "residencial", label: "Residencial" },
-  { value: "comercial", label: "Comercial" },
-  { value: "misto", label: "Misto" },
+// TODO(Ariele): confirmar as faixas reais dos campos do filtro de condomínio.
+const APARTAMENTOS_POR_ANDAR = [
+  { value: "1-2", label: "1 a 2 apartamentos" },
+  { value: "3-4", label: "3 a 4 apartamentos" },
+  { value: "5-6", label: "5 a 6 apartamentos" },
+  { value: "7+", label: "7 ou mais apartamentos" },
 ];
 
-const QTD_UNIDADES = [
-  { value: "ate-50", label: "Até 50 unidades" },
-  { value: "51-100", label: "51 a 100 unidades" },
-  { value: "101-200", label: "101 a 200 unidades" },
-  { value: "200+", label: "Acima de 200 unidades" },
+const BLOCOS_POR_TORRE = [
+  { value: "1", label: "1 bloco" },
+  { value: "2", label: "2 blocos" },
+  { value: "3", label: "3 blocos" },
+  { value: "4+", label: "4 ou mais blocos" },
 ];
 
-const MODALIDADE = [
-  { value: "presencial", label: "Presencial in company" },
-  { value: "online", label: "Online ao vivo" },
-  { value: "hibrido", label: "Híbrido" },
-];
-
-const QTD_PARTICIPANTES = [
-  { value: "1", label: "1 participante" },
-  { value: "2-5", label: "2 a 5 participantes" },
-  { value: "6-10", label: "6 a 10 participantes" },
-  { value: "10+", label: "Mais de 10 participantes" },
+const ANDARES_POR_BLOCO = [
+  { value: "1-4", label: "1 a 4 andares" },
+  { value: "5-8", label: "5 a 8 andares" },
+  { value: "9-12", label: "9 a 12 andares" },
+  { value: "13+", label: "13 ou mais andares" },
 ];
 
 const PERFIL_SELECTOR: FlowStep["fields"][number] = {
@@ -61,7 +57,7 @@ const PERFIL_SELECTOR: FlowStep["fields"][number] = {
   options: [...PROFILE_OPTIONS],
 };
 
-function profileStep(profile: ProfileType): FlowStep {
+function profileStep(profile: "condominio" | "empresa"): FlowStep {
   return {
     id: `step-2-${profile}`,
     title: "Encontre o Formato Ideal para Você",
@@ -89,47 +85,26 @@ function profileStep(profile: ProfileType): FlowStep {
               options: QTD_FUNCIONARIOS,
             },
           ]
-        : profile === "condominio"
-          ? [
-              {
-                id: "tipo_condominio",
-                type: "dropdown" as const,
-                label: "Qual o tipo de condomínio?",
-                options: TIPO_CONDOMINIO,
-              },
-              {
-                id: "destinacao",
-                type: "dropdown" as const,
-                label: "Destinação",
-                options: DESTINACAO,
-              },
-              {
-                id: "qtd_unidades",
-                type: "dropdown" as const,
-                label: "Quantidade de unidades?",
-                options: QTD_UNIDADES,
-              },
-            ]
-          : [
-              {
-                id: "modalidade",
-                type: "dropdown" as const,
-                label: "Qual modalidade prefere?",
-                options: MODALIDADE,
-              },
-              {
-                id: "destinacao",
-                type: "dropdown" as const,
-                label: "Destinação",
-                options: DESTINACAO,
-              },
-              {
-                id: "qtd_participantes",
-                type: "dropdown" as const,
-                label: "Quantidade de participantes?",
-                options: QTD_PARTICIPANTES,
-              },
-            ]),
+        : [
+            {
+              id: "apartamentos_por_andar",
+              type: "dropdown" as const,
+              label: "Há quantos apartamentos por andar?",
+              options: APARTAMENTOS_POR_ANDAR,
+            },
+            {
+              id: "blocos_por_torre",
+              type: "dropdown" as const,
+              label: "Há quantos blocos por torre?",
+              options: BLOCOS_POR_TORRE,
+            },
+            {
+              id: "andares_por_bloco",
+              type: "dropdown" as const,
+              label: "Qual a quantidade de andares por bloco?",
+              options: ANDARES_POR_BLOCO,
+            },
+          ]),
     ],
     next: () => null,
   };
@@ -145,13 +120,13 @@ export const FLOW_STEPS: Record<string, FlowStep> = {
     fields: [PERFIL_SELECTOR],
     next: (answers) => {
       const perfil = answers.perfil as ProfileType | undefined;
-      if (!perfil) return "step-1";
-      return `step-2-${perfil}`;
+      // Pessoa Física não avança para step-2: é tratada com popup imediato (ver QuoteWizard).
+      if (perfil === "condominio" || perfil === "empresa") return `step-2-${perfil}`;
+      return "step-1";
     },
   },
   "step-2-condominio": profileStep("condominio"),
   "step-2-empresa": profileStep("empresa"),
-  "step-2-pessoa_fisica": profileStep("pessoa_fisica"),
 };
 
 export const INITIAL_STEP_ID = "step-1";

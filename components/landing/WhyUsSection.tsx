@@ -59,7 +59,7 @@ export function WhyUsSection() {
                 />
               </div>
               <h3 className="mb-4 text-lg font-semibold text-brand">{item.title}</h3>
-              <p className="text-sm leading-6 text-text/80">{item.description}</p>
+              <p className="text-sm leading-6 text-brand/80">{item.description}</p>
             </article>
           ))}
         </div>

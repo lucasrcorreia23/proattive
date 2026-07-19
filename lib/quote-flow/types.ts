@@ -29,6 +29,10 @@ export type QuoteResult = {
   ctaLabel: string;
   ctaHref: string;
   variant: "purchase" | "exemption" | "discount";
+  /** Oculta o valor no modal (ex.: compra única da Pessoa Física). */
+  hidePrice?: boolean;
+  /** Oculta o bloco de resumo no modal (compra direta, sem orçamento). */
+  hideSummary?: boolean;
 };
 
 export type QuoteState = {

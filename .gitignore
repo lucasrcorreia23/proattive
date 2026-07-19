@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Imagens-fonte brutas (originais); o site usa as versões otimizadas em public/images/
+/public/novas imagens/

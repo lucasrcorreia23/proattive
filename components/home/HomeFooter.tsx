@@ -10,7 +10,7 @@ function quickLinkHref(href: string) {
 
 export function HomeFooter() {
   return (
-    <footer className="bg-white">
+    <footer className="bg-brand-surface">
       <div className="mx-auto flex max-w-[1128px] flex-col gap-12 px-4 py-16 md:flex-row md:items-start md:justify-between lg:px-0">
         {/* Marca */}
         <div className="flex max-w-[280px] flex-col gap-6">
