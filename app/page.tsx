@@ -6,8 +6,8 @@ import { Header } from "@/components/layout/Header";
 import { assets } from "@/lib/assets";
 import {
   arieleWhatsappHref,
+  deiseWhatsappHref,
   HOTMART_CARROS_ELETRICOS_HREF,
-  MATRICULA_QUOTE_HREF,
 } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -127,7 +127,10 @@ export default function Home() {
           theme="white"
           title="Mentoria Direcionada"
           ctaLabel="ENTRE EM CONTATO CONOSCO"
-          ctaHref={MATRICULA_QUOTE_HREF}
+          ctaHref={deiseWhatsappHref(
+            "Olá! Tenho interesse na Mentoria Direcionada.",
+          )}
+          ctaExternal
           paragraph={
             <>
               <strong className="font-semibold">6 meses</strong> de acompanhamento prático{" "}
@@ -145,7 +148,10 @@ export default function Home() {
           theme="brand"
           title="Consultoria Especializada"
           ctaLabel="ENTRE EM CONTATO CONOSCO"
-          ctaHref={MATRICULA_QUOTE_HREF}
+          ctaHref={deiseWhatsappHref(
+            "Olá! Tenho interesse na Consultoria Especializada.",
+          )}
+          ctaExternal
           paragraph={
             <>
               <strong className="font-semibold">2 meses</strong> de direcionamento focado e{" "}

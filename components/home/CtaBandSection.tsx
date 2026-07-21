@@ -8,6 +8,8 @@ type CtaBandSectionProps = {
   paragraph: ReactNode;
   ctaLabel: string;
   ctaHref: string;
+  /** Quando true, abre o link em nova aba (WhatsApp/Hotmart e outros destinos externos). */
+  ctaExternal?: boolean;
 };
 
 const THEME_CLASSES: Record<CtaBandSectionProps["theme"], string> = {
@@ -22,13 +24,20 @@ export function CtaBandSection({
   paragraph,
   ctaLabel,
   ctaHref,
+  ctaExternal = false,
 }: CtaBandSectionProps) {
   return (
     <section className={cn(THEME_CLASSES[theme])}>
       <div className="mx-auto flex max-w-[900px] flex-col items-center gap-6 px-6 py-16 text-center">
         <h2 className="text-[28px] font-semibold leading-tight sm:text-[32px]">{title}</h2>
         <p className="max-w-[742px] text-base font-light leading-7">{paragraph}</p>
-        <ButtonLink href={ctaHref} className="mt-2">
+        <ButtonLink
+          href={ctaHref}
+          className="mt-2"
+          {...(ctaExternal
+            ? { target: "_blank", rel: "noopener noreferrer" }
+            : {})}
+        >
           {ctaLabel}
         </ButtonLink>
       </div>

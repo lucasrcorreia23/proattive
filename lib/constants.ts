@@ -37,10 +37,23 @@ export const MATRICULA_QUOTE_HREF = `${MATRICULA_PATH}#${QUOTE_SECTION_ID}`;
 /** Contato comercial da Ariele (Proattive) para captação dos cursos. */
 export const ARIELE_WHATSAPP = "5548991664962";
 
-/** Monta o link do WhatsApp da Ariele com uma mensagem opcional pré-preenchida. */
-export function arieleWhatsappHref(message?: string) {
-  const base = `https://wa.me/${ARIELE_WHATSAPP}`;
+/** Contato da Deise (Proattive) — mesmo número do site — para Mentoria e Consultoria. */
+export const DEISE_WHATSAPP = SITE.phoneHref;
+
+/** Monta um link do WhatsApp com uma mensagem opcional pré-preenchida. */
+function whatsappHref(number: string, message?: string) {
+  const base = `https://wa.me/${number}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
+
+/** Link do WhatsApp da Ariele (cursos) com mensagem opcional pré-preenchida. */
+export function arieleWhatsappHref(message?: string) {
+  return whatsappHref(ARIELE_WHATSAPP, message);
+}
+
+/** Link do WhatsApp da Deise (mentoria/consultoria) com mensagem opcional pré-preenchida. */
+export function deiseWhatsappHref(message?: string) {
+  return whatsappHref(DEISE_WHATSAPP, message);
 }
 
 /**
