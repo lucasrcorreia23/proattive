@@ -1,137 +1,116 @@
-# Filtro do Curso Brigadista — o que falta confirmar
+# Filtro do site — perguntas para a Ariele
 
-O filtro está implementado a partir do `fluxo de filtro.pdf`. As 63 ocupações, os
-limites de isenção, as razões de cálculo e os três níveis foram extraídos do
-diagrama e conferidos pela geometria do arquivo (não por leitura visual).
-
-O que está abaixo é o que o diagrama **não** responde. Cada item diz onde está no
-código, o que assumimos provisoriamente e o risco de manter a suposição.
+O filtro do Curso Brigadista já está funcionando com as regras do seu fluxo.
+Abaixo, o que o fluxo não deixou claro. Cada item tem o que assumimos por
+enquanto — se estiver certo, é só confirmar.
 
 ---
 
-## 🔴 Bloqueia o ramo Condomínio
+## Precisa responder antes de publicar
 
-### 1. Regra da ocupação A-2 (multifamiliar vertical)
+**1. Condomínio: qual é a regra?**
+No seu fluxo, o caminho do Condomínio faz as três perguntas (apartamentos por
+andar, blocos, andares) e termina ali, sem dizer o que fazer com o resultado.
 
-O ramo Condomínio do fluxo faz 3 perguntas (apartamentos por andar, blocos,
-andares por bloco) e **termina sem regra**. A-1 e A-2 também não aparecem na
-tabela de Empresas — o fluxo começa em A-3.
+Precisamos de três coisas:
+- Condomínio é isento até quantos moradores?
+- Depois disso, 1 brigadista para cada quantos?
+- Qual nível — Básico?
 
-- **Precisamos de**: a partir de qual população o condomínio é isento, a razão
-  (1 para cada quantos) e em que nível entra (Básico?).
-- **Assumimos**: isento < 10, 1 para cada 20, Básico.
-- **Onde**: `lib/quote-flow/occupancies.ts` → `CONDO_RULE`.
-- **Risco**: hoje o número de brigadistas de condomínio é um chute. É o único
-  desfecho do filtro que pode estar numericamente errado.
+*Enquanto isso:* isento até 10, 1 para cada 20, nível Básico.
+*Se estiver errado:* o número de brigadistas de todo condomínio sai errado.
 
-### 2. Quantas pessoas contar por apartamento
+**2. Quantas pessoas contar por apartamento?**
+Para saber a população do condomínio, multiplicamos
+apartamentos × andares × blocos × pessoas por apartamento.
 
-Para chegar na população usamos
-`apartamentos × andares × blocos × pessoas por apartamento`.
+*Enquanto isso:* 2 pessoas por apartamento.
 
-- **Assumimos**: 2 pessoas por apartamento.
-- **Onde**: `lib/quote-flow/occupancies.ts` → `PEOPLE_PER_APARTMENT`.
-
-### 3. Condomínio horizontal (A-1) vs. vertical (A-2)
-
-Hoje todo condomínio é tratado como **A-2**. Se a regra de A-1 for diferente, o
-filtro precisa de mais uma pergunta para distinguir os dois.
+**3. O prédio horizontal tem regra diferente do vertical?**
+Hoje todo condomínio é tratado como vertical (A-2). Se casa geminada e
+condomínio horizontal (A-1) tiverem regra diferente, o filtro precisa perguntar
+qual dos dois é.
 
 ---
 
-## 🟡 Afetam o texto que o cliente lê
+## Precisa da lista do sistema
 
-### 4. Descrições das ocupações
+**4. Faltam as descrições das ocupações.**
+No print que você mandou, aparecem as descrições de A-1 até F-1 — essas já estão
+no site com o texto exato. As outras 44 estão aparecendo como
+*"F-2 — descrição a confirmar"*.
 
-A captura do sistema do Corpo de Bombeiros cobre de **A-1 até F-1**. Essas estão
-no ar com o texto exato. As outras 44 aparecem como
-`"F-2 [local de reunião de público] descrição a confirmar"`.
+Deixamos assim de propósito: o cliente escolhe a ocupação pela descrição, e se a
+gente escrever errado ele compra o curso errado. Melhor aparecer "a confirmar"
+do que aparecer errado.
 
-Isso foi proposital: o cliente escolhe a ocupação **pela descrição**, e uma
-descrição errada faz ele comprar o curso errado. Preferimos o placeholder.
+*Precisamos:* o print do dropdown inteiro do sistema do Corpo de Bombeiros.
 
-- **Precisamos de**: o print (ou a lista) do restante do dropdown do sistema.
-- **Onde**: `lib/quote-flow/occupancies.ts` → `LABELS`. É só preencher as strings.
-
-### 5. Grupo K
-
-O fluxo tem **K-1 e K-2**, mas o grupo K não existe na tabela de classificação
-que conhecemos. Confirmar o que são — pode ser particularidade do CBMSC.
+**5. O que é o grupo K?**
+Seu fluxo tem K-1 e K-2, mas esse grupo não aparece na tabela de classificação
+que conhecemos. É alguma coisa específica de Santa Catarina?
 
 ---
 
-## 🟡 Confirmações do cálculo (respondidas, mas vale bater com a Ariele)
+## Confirmar a conta
 
-### 6. Fórmula acima da isenção
+**6. O cálculo está batendo?**
+Fazemos assim: tira o número isento da população e divide o que sobra.
 
-- **Implementado**: `teto((população − isenção) / N)`.
-- Exemplo: D-1 (isento < 10, 1 para cada 15) com 40 funcionários →
-  `teto((40−10)/15)` = **2 brigadistas**.
-- A alternativa seria `teto(40/15)` = 3. Vale confirmar num caso real.
+Exemplo — escritório (D-1), que é isento até 10 e pede 1 para cada 15:
+uma empresa com **40 funcionários** dá **2 brigadistas**.
+(40 − 10 = 30, dividido por 15 = 2)
 
-### 7. O que significam "50% / 50%" e "75% / 25%"
+A outra leitura possível seria dividir os 40 direto por 15, o que daria 3.
+Confirma num caso real qual é o certo?
 
-Aparecem em três ocupações e o diagrama não explica.
+**7. O que significa "50% / 50%" e "75% / 25%"?**
+Aparece em três ocupações e o fluxo não explica. Entendemos que é a divisão
+entre o nível daquele grupo e o nível de cima:
 
-- **Implementado**: divide entre o nível do grupo e o **imediatamente superior**,
-  seguindo a convenção do nó explícito do M-1 ("50% básico / 50% Intermediário"):
-  - **I-2** → 50% Básico + 50% Intermediário
-  - **I-3** → 75% Intermediário + 25% Avançado
-  - **J-4** → 50% Intermediário + 50% Avançado
-- **Consequência prática**: como I-3 e J-4 passam a envolver Avançado, esses dois
-  casos **deixam de vender online** e vão para o WhatsApp (ver item 9). Se a
-  interpretação estiver errada, são duas vendas indo para o atendimento à toa.
-- **Onde**: `lib/quote-flow/occupancies.ts`.
+| Ocupação | Entendemos que é |
+|---|---|
+| I-2 | metade Básico, metade Intermediário |
+| I-3 | 75% Intermediário, 25% Avançado |
+| J-4 | metade Intermediário, metade Avançado |
 
-### 8. Sobra do arredondamento
+**Atenção:** por causa disso, I-3 e J-4 passaram a envolver Avançado — e
+Avançado não vende pelo site, vai para o WhatsApp. Se a leitura estiver errada,
+são duas ocupações caindo no seu atendimento sem precisar.
 
-Numa brigada de 3 pessoas com divisão 75/25, quem fica com a sobra?
-
-- **Implementado**: o nível de maior participação (3 Intermediário, 0 Avançado).
-
----
-
-## 🟢 Decisões de negócio já aplicadas
-
-### 9. Avançado não vende online
-
-Conforme a sua nota no fluxo, qualquer resultado que envolva Avançado mostra
-"Falar com a equipe" e abre o WhatsApp com ocupação e quantidade já na mensagem —
-não oferece o link de compra.
-
-### 10. Isento oferece desconto
-
-Conforme o fluxo ("informar isenção, porém oferecer link com desconto"), o
-resultado isento abre o WhatsApp.
-
-- **Falta**: existe um link/cupom de desconto real para usar no lugar do WhatsApp?
-
-### 11. Guia pós-compra
-
-Sua nota no fluxo: *"após a compra do produto, enviar um guia com instruções e
-dicas para seleção dos funcionários credenciados"*. Isso é entrega pós-venda,
-fora do site — só registrando para não se perder.
+**8. Sobrou um brigadista na divisão — vai para qual nível?**
+Se der 3 brigadistas numa divisão 75/25, hoje ficam 3 no Intermediário e nenhum
+no Avançado. Está certo?
 
 ---
 
-## 🟢 Hotmart
+## Já está aplicado como você pediu
 
-### 12. Quantidade no checkout
+**9. Avançado não vende pelo site.** Conforme seu bilhete no fluxo, quando o
+resultado envolve Avançado o botão vira "Falar com a equipe" e abre seu WhatsApp
+com a ocupação e a quantidade já escritas na mensagem.
 
-O fluxo pede "apresentar link para a quantidade de acordo com o cálculo". O link
-sai como `https://go.hotmart.com/R106034478B?quantity=N`.
+**10. Isento recebe oferta com desconto.** Conforme o fluxo, quem é isento vê
+que está dispensado, mas recebe o convite para treinar mesmo assim.
+*Pergunta:* existe um cupom ou link de desconto real para usar aí? Hoje abre o
+WhatsApp.
 
-- **Confirmar**: o produto está configurado na Hotmart para aceitar quantidade
-  maior que 1? Se não estiver, o parâmetro é ignorado e o cliente compra 1 vaga
-  quando precisava de 5.
-- **Onde**: `lib/constants.ts` → `hotmartBrigadistaHref`.
+**11. Guia pós-compra.** Seu bilhete diz para enviar um guia com instruções de
+seleção dos funcionários depois da compra. Isso é fora do site — só anotando
+para não se perder.
 
-### 13. Link de Carros Elétricos
+---
 
-`HOTMART_CARROS_ELETRICOS_HREF` continua vazio — o link novo é do Brigadista. O
-CTA de Carros Elétricos ainda aponta para o WhatsApp.
+## Sobre o link da Hotmart
 
-### 14. Pessoa Física
+**12. O produto aceita comprar mais de uma vaga de uma vez?**
+O fluxo pede para apresentar o link já com a quantidade calculada. Estamos
+mandando a quantidade no link, mas se o produto não estiver configurado para
+vender várias vagas, a Hotmart ignora e o cliente compra **1 vaga quando
+precisava de 5**. Vale conferir no painel.
 
-A compra individual usa o mesmo link do Brigadista. Confirmar se é isso mesmo ou
-se existe uma oferta separada para pessoa física.
+**13. Pessoa Física usa o mesmo link?** Hoje sim. Existe uma oferta separada
+para compra individual?
+
+**14. Carros Elétricos ainda está sem link.** O link novo é do Brigadista. O
+botão de Carros Elétricos continua indo para o WhatsApp.
