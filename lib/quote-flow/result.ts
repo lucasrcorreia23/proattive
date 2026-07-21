@@ -6,12 +6,7 @@
  * decide o destino — link de compra, link com desconto ou WhatsApp.
  */
 
-import {
-  ARIELE_WHATSAPP_MESSAGES,
-  HOTMART_BRIGADISTA_HREF,
-  arieleWhatsappHref,
-  hotmartBrigadistaHref,
-} from "../constants.ts";
+import { ARIELE_WHATSAPP_MESSAGES, arieleWhatsappHref } from "../constants.ts";
 import {
   computeCompanyBrigade,
   computeCondoBrigade,
@@ -110,7 +105,7 @@ export function buildQuoteResult(answers: Record<string, string>): QuoteResult {
     brigade,
     text: "Garanta as vagas para a quantidade calculada e receba o certificado reconhecido.",
     ctaLabel: "Garantir as vagas",
-    ctaHref: hotmartBrigadistaHref(brigade.total),
+    ctaHref: arieleWhatsappHref(ARIELE_WHATSAPP_MESSAGES.compra(brigade)),
     variant: "purchase",
   };
 }
@@ -122,8 +117,8 @@ export function buildPessoaFisicaResult(): QuoteResult {
     summary: [],
     hideSummary: true,
     info: "Garanta sua vaga com a compra única do curso.",
-    ctaLabel: "Comprar agora",
-    ctaHref: HOTMART_BRIGADISTA_HREF,
+    ctaLabel: "Quero me inscrever",
+    ctaHref: arieleWhatsappHref(ARIELE_WHATSAPP_MESSAGES.pessoaFisica),
     variant: "purchase",
   };
 }

@@ -4,7 +4,11 @@ import { CtaBandSection } from "@/components/home/CtaBandSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { Header } from "@/components/layout/Header";
 import { assets } from "@/lib/assets";
-import { arieleWhatsappHref, MATRICULA_QUOTE_HREF } from "@/lib/constants";
+import {
+  arieleWhatsappHref,
+  HOTMART_CARROS_ELETRICOS_HREF,
+  MATRICULA_QUOTE_HREF,
+} from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "ProAttive Treinamentos | Cursos e Consultoria em Segurança Contra Incêndio",
@@ -70,10 +74,8 @@ const COURSES: CourseSection[] = [
           "Profissionais que precisam entender as características do incêndio em baterias de lítio, dominar os requisitos gerais do SAVE e aprender o passo a passo definitivo para montar um Projeto Baseado em Desempenho (PBD) sem travar nas exigências do Corpo de Bombeiros.",
       },
     ],
-    // TODO(Ariele): trocar para HOTMART_CARROS_ELETRICOS_HREF quando o link chegar.
-    ctaHref: arieleWhatsappHref(
-      "Olá! Tenho interesse no Curso de Regularização de Locais com Carros Elétricos.",
-    ),
+    // Único curso com checkout próprio; os outros dois passam pelo WhatsApp.
+    ctaHref: HOTMART_CARROS_ELETRICOS_HREF,
     ctaExternal: true,
   },
   {

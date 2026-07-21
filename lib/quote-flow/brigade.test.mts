@@ -188,15 +188,16 @@ describe("resultado exibido ao cliente", () => {
     );
   });
 
-  it("compra normal vai para a Hotmart com a quantidade calculada", () => {
+  it("Brigadista não vende pelo site: todo desfecho vai para o WhatsApp", () => {
     const result = buildQuoteResult({
       perfil: "empresa",
       ocupacao: "D-1",
       qtd_funcionarios: "40",
     });
     assert.equal(result.variant, "purchase");
-    assert.match(result.ctaHref, /^https:\/\/go\.hotmart\.com\//);
-    assert.match(result.ctaHref, /quantity=2/);
+    assert.match(result.ctaHref, /^https:\/\/wa\.me\//);
+    // A quantidade calculada precisa chegar escrita na mensagem da Ariele.
+    assert.match(decodeURIComponent(result.ctaHref), /2 brigadista\(s\): 2 Básico/);
   });
 
   it("Avançado não vende online: cai no WhatsApp", () => {

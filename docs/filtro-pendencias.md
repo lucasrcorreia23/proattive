@@ -101,16 +101,21 @@ para não se perder.
 
 ---
 
-## Sobre o link da Hotmart
+## Como está a venda de cada curso
 
-**12. O produto aceita comprar mais de uma vaga de uma vez?**
-O fluxo pede para apresentar o link já com a quantidade calculada. Estamos
-mandando a quantidade no link, mas se o produto não estiver configurado para
-vender várias vagas, a Hotmart ignora e o cliente compra **1 vaga quando
-precisava de 5**. Vale conferir no painel.
+| Curso | Para onde vai o botão |
+|---|---|
+| Brigadista | WhatsApp |
+| Carros Elétricos | Hotmart (checkout direto) |
+| Projeto Preventivo | WhatsApp |
 
-**13. Pessoa Física usa o mesmo link?** Hoje sim. Existe uma oferta separada
-para compra individual?
+**12. O Brigadista continua fechando no WhatsApp mesmo?**
+Todo desfecho do filtro — isento, compra normal e Avançado — abre sua conversa
+com a ocupação e a quantidade de brigadistas já escritas na mensagem. Você não
+precisa perguntar nada, é só responder com o valor.
 
-**14. Carros Elétricos ainda está sem link.** O link novo é do Brigadista. O
-botão de Carros Elétricos continua indo para o WhatsApp.
+*Se um dia o Brigadista ganhar checkout próprio*, é só nos passar o link.
+
+**13. Pessoa Física também vai para o WhatsApp.** Quem escolhe "Pessoa Física"
+no filtro cai direto na sua conversa, sem responder as perguntas. Confirma que
+é assim que você quer?
