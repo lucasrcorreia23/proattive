@@ -1,54 +1,11 @@
-import type { FlowStep, ProfileType } from "./types";
+import { COMPANY_OCCUPANCY_OPTIONS, getOccupancy } from "./occupancies.ts";
+import type { FlowStep, ProfileType } from "./types.ts";
 
 export const PROFILE_OPTIONS = [
   { value: "condominio", label: "Condomínio" },
   { value: "empresa", label: "Empresa" },
   { value: "pessoa_fisica", label: "Pessoa Física" },
 ] as const;
-
-const TIPO_EMPRESA = [
-  { value: "comercial", label: "Comercial" },
-  { value: "industrial", label: "Industrial" },
-  { value: "servicos", label: "Serviços" },
-  { value: "educacional", label: "Educacional" },
-];
-
-const DESTINACAO = [
-  { value: "escritorio", label: "Escritório / Administrativo" },
-  { value: "industria", label: "Área industrial" },
-  { value: "comercio", label: "Comércio / Varejo" },
-  { value: "educacao", label: "Instituição de ensino" },
-  { value: "eventos", label: "Eventos e recreação" },
-];
-
-const QTD_FUNCIONARIOS = [
-  { value: "1-10", label: "1 a 10 colaboradores" },
-  { value: "11-30", label: "11 a 30 colaboradores" },
-  { value: "31-50", label: "31 a 50 colaboradores" },
-  { value: "51+", label: "Acima de 50 colaboradores" },
-];
-
-// TODO(Ariele): confirmar as faixas reais dos campos do filtro de condomínio.
-const APARTAMENTOS_POR_ANDAR = [
-  { value: "1-2", label: "1 a 2 apartamentos" },
-  { value: "3-4", label: "3 a 4 apartamentos" },
-  { value: "5-6", label: "5 a 6 apartamentos" },
-  { value: "7+", label: "7 ou mais apartamentos" },
-];
-
-const BLOCOS_POR_TORRE = [
-  { value: "1", label: "1 bloco" },
-  { value: "2", label: "2 blocos" },
-  { value: "3", label: "3 blocos" },
-  { value: "4+", label: "4 ou mais blocos" },
-];
-
-const ANDARES_POR_BLOCO = [
-  { value: "1-4", label: "1 a 4 andares" },
-  { value: "5-8", label: "5 a 8 andares" },
-  { value: "9-12", label: "9 a 12 andares" },
-  { value: "13+", label: "13 ou mais andares" },
-];
 
 const PERFIL_SELECTOR: FlowStep["fields"][number] = {
   id: "perfil",
@@ -57,76 +14,114 @@ const PERFIL_SELECTOR: FlowStep["fields"][number] = {
   options: [...PROFILE_OPTIONS],
 };
 
-function profileStep(profile: "condominio" | "empresa"): FlowStep {
+const STEP_TITLE = "Encontre o formato ideal para você";
+const STEP_SUBTITLE =
+  "Ajuste os campos conforme a sua estrutura e descubra a brigada exigida.";
+
+/** Cabeçalho comum dos passos internos, com o perfil já escolhido em modo leitura. */
+function innerStep(
+  id: string,
+  fields: FlowStep["fields"],
+  next?: FlowStep["next"],
+): FlowStep {
   return {
-    id: `step-2-${profile}`,
-    title: "Encontre o Formato Ideal para Você",
-    subtitle: "Ajuste os campos conforme a sua estrutura e gere um orçamento sob medida.",
-    fields: [
-      { ...PERFIL_SELECTOR, readOnly: true },
-      ...(profile === "empresa"
-        ? [
-            {
-              id: "tipo_empresa",
-              type: "dropdown" as const,
-              label: "Qual é o tipo de empresa?",
-              options: TIPO_EMPRESA,
-            },
-            {
-              id: "destinacao",
-              type: "dropdown" as const,
-              label: "Destinação",
-              options: DESTINACAO,
-            },
-            {
-              id: "qtd_funcionarios",
-              type: "dropdown" as const,
-              label: "Qual a quantidade de funcionários?",
-              options: QTD_FUNCIONARIOS,
-            },
-          ]
-        : [
-            {
-              id: "apartamentos_por_andar",
-              type: "dropdown" as const,
-              label: "Há quantos apartamentos por andar?",
-              options: APARTAMENTOS_POR_ANDAR,
-            },
-            {
-              id: "blocos_por_torre",
-              type: "dropdown" as const,
-              label: "Há quantos blocos por torre?",
-              options: BLOCOS_POR_TORRE,
-            },
-            {
-              id: "andares_por_bloco",
-              type: "dropdown" as const,
-              label: "Qual a quantidade de andares por bloco?",
-              options: ANDARES_POR_BLOCO,
-            },
-          ]),
-    ],
-    next: () => null,
+    id,
+    title: STEP_TITLE,
+    subtitle: STEP_SUBTITLE,
+    fields: [{ ...PERFIL_SELECTOR, readOnly: true }, ...fields],
+    next: next ?? (() => null),
   };
 }
 
 export const FLOW_STEPS: Record<string, FlowStep> = {
   "step-1": {
     id: "step-1",
-    title: "Encontre o formato ideal para você",
-    subtitle:
-      "Ajuste os campos conforme a sua estrutura e gere um orçamento sob medida.",
-    highlightSubtitle: "orçamento sob medida",
+    title: STEP_TITLE,
+    subtitle: STEP_SUBTITLE,
+    highlightSubtitle: "a brigada exigida",
     fields: [PERFIL_SELECTOR],
     next: (answers) => {
       const perfil = answers.perfil as ProfileType | undefined;
-      // Pessoa Física não avança para step-2: é tratada com popup imediato (ver QuoteWizard).
-      if (perfil === "condominio" || perfil === "empresa") return `step-2-${perfil}`;
+      // Pessoa Física não avança: é tratada com popup imediato (ver QuoteWizard).
+      if (perfil === "condominio") return "step-2-condominio";
+      if (perfil === "empresa") return "step-2-empresa";
       return "step-1";
     },
   },
-  "step-2-condominio": profileStep("condominio"),
-  "step-2-empresa": profileStep("empresa"),
+
+  // ---------- Empresas: ocupação → população (ou metragem, se M-1) ----------
+  "step-2-empresa": innerStep(
+    "step-2-empresa",
+    [
+      {
+        id: "ocupacao",
+        type: "searchable-dropdown",
+        label: "Qual é a ocupação da edificação?",
+        options: COMPANY_OCCUPANCY_OPTIONS,
+        hint: "A mesma classificação usada pelo Corpo de Bombeiros.",
+      },
+    ],
+    (answers) => {
+      const occupancy = getOccupancy(answers.ocupacao ?? "");
+      if (!occupancy) return "step-2-empresa";
+      if (occupancy.rule.kind === "tunnel") return "step-3-tunel";
+      // Isento em qualquer população: não faz sentido perguntar o resto.
+      if (occupancy.rule.kind === "always-exempt") return null;
+      return "step-3-populacao";
+    },
+  ),
+
+  "step-3-populacao": innerStep("step-3-populacao", [
+    {
+      id: "qtd_funcionarios",
+      type: "number",
+      label: "Qual a quantidade de funcionários?",
+      options: [],
+      placeholder: "Ex.: 40",
+      min: 1,
+    },
+  ]),
+
+  // Metragem exata, e não faixa: acima de 1.000 m o cálculo é
+  // "02 + 1 a cada 1.000 m", que depende do número real.
+  "step-3-tunel": innerStep("step-3-tunel", [
+    {
+      id: "metros_tunel",
+      type: "number",
+      label: "Quantos metros de túnel?",
+      options: [],
+      placeholder: "Ex.: 1500",
+      min: 1,
+    },
+  ]),
+
+  // ---------- Condomínios ----------
+  "step-2-condominio": innerStep("step-2-condominio", [
+    {
+      id: "apartamentos_por_andar",
+      type: "number",
+      label: "Há quantos apartamentos por andar?",
+      options: [],
+      placeholder: "Ex.: 4",
+      min: 1,
+    },
+    {
+      id: "blocos_por_torre",
+      type: "number",
+      label: "Quantos blocos/torres?",
+      options: [],
+      placeholder: "Ex.: 2",
+      min: 1,
+    },
+    {
+      id: "andares_por_bloco",
+      type: "number",
+      label: "Qual a quantidade de andares por bloco?",
+      options: [],
+      placeholder: "Ex.: 10",
+      min: 1,
+    },
+  ]),
 };
 
 export const INITIAL_STEP_ID = "step-1";

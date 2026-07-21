@@ -1,18 +1,21 @@
 import { z } from "zod";
-import { FLOW_STEPS } from "./config";
-import type { FlowStep, QuoteResult, QuoteState } from "./types";
-import { buildQuoteResult } from "./pricing";
+import { FLOW_STEPS } from "./config.ts";
+import { buildQuoteResult } from "./result.ts";
+import type { FlowStep, QuoteResult, QuoteState } from "./types.ts";
 
 export function getStep(stepId: string): FlowStep | undefined {
   return FLOW_STEPS[stepId];
 }
 
 export function createStepSchema(step: FlowStep) {
-  const shape: Record<string, z.ZodString> = {};
+  const shape: Record<string, z.ZodType> = {};
 
   for (const field of step.fields) {
     if (field.readOnly) continue;
-    shape[field.id] = z.string().min(1, "Selecione uma opção");
+    shape[field.id] =
+      field.type === "number"
+        ? z.coerce.number().int().min(field.min ?? 1, "Informe um número válido")
+        : z.string().min(1, "Selecione uma opção");
   }
 
   return z.object(shape);
@@ -43,15 +46,9 @@ export function advanceQuoteState(state: QuoteState): QuoteState | QuoteResult {
     return buildQuoteResult(state.answers);
   }
 
-  return {
-    stepId: nextId,
-    answers: {
-      ...state.answers,
-      perfil: state.answers.perfil,
-    },
-  };
+  return { stepId: nextId, answers: state.answers };
 }
 
 export function isQuoteResult(value: QuoteState | QuoteResult): value is QuoteResult {
-  return "price" in value;
+  return "ctaHref" in value;
 }

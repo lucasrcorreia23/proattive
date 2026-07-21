@@ -46,6 +46,49 @@ export function arieleWhatsappHref(message?: string) {
 /**
  * TODO(Ariele): substituir pelo link real da Hotmart (curso Carros Elétricos /
  * compra única da Pessoa Física). Enquanto não chega, os CTAs de Carros Elétricos
- * e da Pessoa Física apontam para o WhatsApp da Ariele (ver app/page.tsx e pricing.ts).
+ * e da Pessoa Física apontam para o WhatsApp da Ariele (ver app/page.tsx e result.ts).
  */
 export const HOTMART_CARROS_ELETRICOS_HREF = "";
+
+/** Checkout do curso de Brigadista na Hotmart. */
+export const HOTMART_BRIGADISTA_HREF = "https://go.hotmart.com/R106034478B";
+
+/**
+ * O fluxo pede "apresentar link para a quantidade de acordo com o cálculo".
+ * `quantity` é o parâmetro de checkout da Hotmart; se o produto não estiver
+ * configurado para venda de múltiplas unidades ele é simplesmente ignorado.
+ * TODO(Ariele): confirmar no painel se o produto aceita quantidade > 1.
+ */
+export function hotmartBrigadistaHref(quantity?: number) {
+  if (!quantity || quantity <= 1) return HOTMART_BRIGADISTA_HREF;
+  return `${HOTMART_BRIGADISTA_HREF}?quantity=${quantity}`;
+}
+
+type BrigadeLike = {
+  total: number;
+  occupancyCode: string;
+  breakdown: Array<{ level: string; count: number }>;
+};
+
+function describeBrigade(brigade: BrigadeLike) {
+  const levels: Record<string, string> = {
+    basico: "Básico",
+    intermediario: "Intermediário",
+    avancado: "Avançado",
+  };
+  return brigade.breakdown
+    .map((entry) => `${entry.count} ${levels[entry.level] ?? entry.level}`)
+    .join(" + ");
+}
+
+/**
+ * Mensagens pré-preenchidas do WhatsApp, para os desfechos do filtro que NÃO
+ * vão direto para a Hotmart: isenção (precisa do link com desconto) e nível
+ * Avançado (aula presencial, orçado à parte).
+ */
+export const ARIELE_WHATSAPP_MESSAGES = {
+  isento:
+    "Olá! Fiz o filtro no site e minha edificação é isenta de brigada, mas quero treinar a equipe com a condição especial.",
+  avancado: (brigade: BrigadeLike) =>
+    `Olá! Fiz o filtro no site (ocupação ${brigade.occupancyCode}) e preciso de ${brigade.total} brigadista(s): ${describeBrigade(brigade)}. Como envolve nível Avançado, quero um orçamento.`,
+} as const;

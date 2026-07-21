@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { LEVEL_LABELS } from "@/lib/quote-flow/occupancies";
 import type { QuoteResult } from "@/lib/quote-flow/types";
 
 type FilterResultModalProps = {
@@ -10,19 +11,17 @@ type FilterResultModalProps = {
 };
 
 export function FilterResultModal({ result, onClose }: FilterResultModalProps) {
+  const brigade = result.brigade;
+  const showCount = brigade !== undefined && !brigade.exempt;
+
   function handleCta() {
-    // Compra direta (Pessoa Física): apenas abre o link, sem mensagem de orçamento.
-    if (!result.hideSummary) {
-      console.log("Quote submitted:", result);
-      window.alert("Orçamento enviado com sucesso! Em breve entraremos em contato.");
-    }
     window.open(result.ctaHref, "_blank", "noopener,noreferrer");
     onClose();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-[493px] rounded-card bg-white px-8 py-6">
+      <div className="relative max-h-[90vh] w-full max-w-[493px] overflow-y-auto rounded-card bg-white px-8 py-6">
         <button
           type="button"
           onClick={onClose}
@@ -37,8 +36,8 @@ export function FilterResultModal({ result, onClose }: FilterResultModalProps) {
             {result.title}
           </h3>
 
-          {!result.hideSummary && (
-            <div className="rounded-card bg-brand/10 p-4 text-center font-[family-name:var(--font-inter)] text-lg text-brand">
+          {!result.hideSummary && result.summary.length > 0 && (
+            <div className="rounded-card bg-brand/10 p-4 text-center font-[family-name:var(--font-inter)] text-base text-brand">
               {result.summary.map((item) => (
                 <p key={item.label}>
                   {item.label}: <strong>{item.value}</strong>
@@ -47,20 +46,37 @@ export function FilterResultModal({ result, onClose }: FilterResultModalProps) {
             </div>
           )}
 
+          {showCount && (
+            <div className="flex flex-col items-center gap-2">
+              <p className="font-[family-name:var(--font-inter)] text-5xl font-extrabold tracking-tight text-brand">
+                {brigade.total}
+              </p>
+              <p className="text-sm font-medium uppercase tracking-wide text-brand/70">
+                {brigade.total === 1 ? "brigadista" : "brigadistas"}
+              </p>
+
+              <div className="mt-2 flex flex-col gap-1 text-center">
+                {brigade.breakdown.map((entry) => (
+                  <p
+                    key={entry.level}
+                    className="font-[family-name:var(--font-inter)] text-lg text-brand"
+                  >
+                    <strong>{entry.count}</strong> no nível{" "}
+                    <strong>{LEVEL_LABELS[entry.level]}</strong>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
           {result.info && (
-            <p className="text-center font-[family-name:var(--font-inter)] text-lg font-medium text-brand">
+            <p className="text-center font-[family-name:var(--font-inter)] text-base font-medium text-brand">
               {result.info}
             </p>
           )}
           {result.text && (
-            <p className="text-center font-[family-name:var(--font-inter)] text-lg font-medium text-brand">
+            <p className="text-center font-[family-name:var(--font-inter)] text-sm text-brand/80">
               {result.text}
-            </p>
-          )}
-
-          {!result.hidePrice && (
-            <p className="text-center font-[family-name:var(--font-inter)] text-4xl font-extrabold tracking-tight text-brand">
-              {result.priceLabel}
             </p>
           )}
 
