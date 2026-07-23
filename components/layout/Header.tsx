@@ -105,6 +105,9 @@ export function Header() {
                 key={link.label}
                 href={link.href}
                 className="text-sm font-medium uppercase tracking-wide text-brand transition-colors hover:text-accent"
+                {...(link.external
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
               >
                 {link.label}
               </Link>
@@ -150,6 +153,9 @@ export function Header() {
                 href={link.href}
                 className="text-sm font-medium uppercase tracking-wide text-brand"
                 onClick={() => setOpen(false)}
+                {...(link.external
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
               >
                 {link.label}
               </Link>

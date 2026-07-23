@@ -9,14 +9,15 @@ export const SITE = {
 } as const;
 
 export const NAV_LINKS = [
-  { label: "HOME", href: "#" },
-  { label: "QUEM SOMOS", href: "#" },
-  { label: "SOLUÇÕES", href: "#" },
-  { label: "POR QUE PROATTIVE?", href: "#" },
-  { label: "CASES", href: "#" },
-  { label: "CLIENTES", href: "#" },
-  { label: "CONTATO", href: "#" },
-  { label: "BLOG", href: "#" },
+  { label: "HOME", href: "https://proattive.com.br/", external: true },
+  { label: "QUEM SOMOS", href: "https://proattive.com.br/#quem-somos", external: true },
+  { label: "SOLUÇÕES", href: "https://proattive.com.br/#solucoes", external: true },
+  { label: "POR QUE PROATTIVE?", href: "https://proattive.com.br/#porque", external: true },
+  { label: "CASES", href: "https://proattive.com.br/#cases", external: true },
+  { label: "CLIENTES", href: "https://proattive.com.br/#clientes", external: true },
+  { label: "CONTATO", href: "https://proattive.com.br/#contato", external: true },
+  { label: "BLOG", href: "https://proattive.com.br/blog/", external: true },
+  { label: "CURSOS", href: "/", external: false },
 ] as const;
 
 export const ANCHOR_LINKS = [
