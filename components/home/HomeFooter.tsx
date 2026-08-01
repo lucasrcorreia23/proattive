@@ -17,8 +17,10 @@ export function HomeFooter() {
           <Image
             src={assets.logo.treinamentosFull}
             alt="ProAttive Treinamentos"
-            width={525}
-            height={168}
+            width={316}
+            height={101}
+            // SVG: o otimizador do next/image recusa SVG sem dangerouslyAllowSVG.
+            unoptimized
             className="h-auto w-[240px]"
           />
           <p className="text-sm leading-6 text-brand-light">

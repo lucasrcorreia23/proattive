@@ -21,9 +21,19 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ProAttive Treinamentos",
+  metadataBase: new URL("https://proattive.vercel.app"),
+  title: {
+    default: "Cursos ProAttive | Segurança Contra Incêndio",
+    template: "%s | Cursos ProAttive",
+  },
   description:
     "Cursos, mentoria e consultoria especializada em segurança contra incêndio.",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "https://proattive.vercel.app/",
+    siteName: "Cursos ProAttive",
+  },
 };
 
 export default function RootLayout({

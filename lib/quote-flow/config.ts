@@ -96,15 +96,9 @@ export const FLOW_STEPS: Record<string, FlowStep> = {
   ]),
 
   // ---------- Condomínios ----------
+  // A pergunta "apartamentos por andar" foi removida a pedido do cliente: não
+  // entrava na conta (1 brigadista por andar, por torre) e só alongava o filtro.
   "step-2-condominio": innerStep("step-2-condominio", [
-    {
-      id: "apartamentos_por_andar",
-      type: "number",
-      label: "Há quantos apartamentos por andar?",
-      options: [],
-      placeholder: "Ex.: 4",
-      min: 1,
-    },
     {
       id: "blocos_por_torre",
       type: "number",

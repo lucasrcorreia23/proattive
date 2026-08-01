@@ -24,7 +24,7 @@ export function SelectorCard({
         "flex h-[52px] flex-1 items-center gap-2.5 rounded-card px-4 text-sm transition-colors",
         selected
           ? "border border-accent bg-accent-soft text-accent"
-          : "border border-transparent bg-white text-text",
+          : "border border-transparent bg-white text-brand",
         disabled && "cursor-default opacity-80",
       )}
     >

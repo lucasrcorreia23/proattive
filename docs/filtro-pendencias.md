@@ -6,30 +6,30 @@ enquanto — se estiver certo, é só confirmar.
 
 ---
 
-## Precisa responder antes de publicar
+## Resolvido pelo fluxograma (board do Figma)
 
-**1. Condomínio: qual é a regra?**
-No seu fluxo, o caminho do Condomínio faz as três perguntas (apartamentos por
-andar, blocos, andares) e termina ali, sem dizer o que fazer com o resultado.
+**1. Condomínio: qual é a regra? — RESOLVIDO.** O fluxograma fecha o ramo
+Condomínio com *"Todo residencial é isento"* e *"Informar isenção, porém oferecer
+link com desconto / Calcular uma pessoa por andar por torre"*. Então: condomínio
+é **sempre** isento (não existe faixa de isenção nem população mínima) e a
+quantidade que mostramos é uma **sugestão** de andares × torres, tudo no nível
+Básico. Seu post-it confirma: 5 torres de 10 andares → 50 brigadistas sugeridos.
 
-Precisamos de três coisas:
-- Condomínio é isento até quantos moradores?
-- Depois disso, 1 brigadista para cada quantos?
-- Qual nível — Básico?
+No site, o condomínio agora vê que está dispensado por lei, vê a quantidade
+sugerida com o aviso de que é sugestão nossa (não exigência), e o botão continua
+levando ao seu WhatsApp com a condição especial.
 
-*Enquanto isso:* isento até 10, 1 para cada 20, nível Básico.
-*Se estiver errado:* o número de brigadistas de todo condomínio sai errado.
+**2. Quantas pessoas contar por apartamento? — RESOLVIDO: não se conta.** Como a
+conta do fluxograma é andares × torres, o filtro deixou de estimar população de
+condomínio e o fator "pessoas por apartamento" saiu do código. A pergunta
+"quantos apartamentos por andar" continua na tela — o fluxograma anota
+*"(pode remover)"*, mas essa decisão é sua —; ela só não influencia mais o
+resultado.
 
-**2. Quantas pessoas contar por apartamento?**
-Para saber a população do condomínio, multiplicamos
-apartamentos × andares × blocos × pessoas por apartamento.
-
-*Enquanto isso:* 2 pessoas por apartamento.
-
-**3. O prédio horizontal tem regra diferente do vertical?**
-Hoje todo condomínio é tratado como vertical (A-2). Se casa geminada e
-condomínio horizontal (A-1) tiverem regra diferente, o filtro precisa perguntar
-qual dos dois é.
+**3. O prédio horizontal tem regra diferente do vertical? — RESOLVIDO: não.** O
+fluxograma diz *"todo residencial é isento"*, sem separar horizontal de vertical.
+Não precisamos perguntar A-1 ou A-2; o filtro segue registrando o condomínio
+como A-2.
 
 ---
 

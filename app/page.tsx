@@ -11,7 +11,9 @@ import {
 } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "ProAttive Treinamentos | Cursos e Consultoria em Segurança Contra Incêndio",
+  // Home é o mesmo segmento do layout raiz, então o title.template não se
+  // aplica aqui — a marca "Cursos ProAttive" vai embutida no próprio título.
+  title: "Cursos e Consultoria em Segurança Contra Incêndio | Cursos ProAttive",
   description:
     "Cursos, mentoria e consultoria especializada em segurança contra incêndio, Lei Lucas, projetos preventivos e regularização de recarga de veículos elétricos.",
 };

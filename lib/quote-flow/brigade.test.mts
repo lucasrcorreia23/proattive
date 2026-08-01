@@ -11,10 +11,17 @@ import {
   computeCompanyBrigade,
   computeCondoBrigade,
   computeTunnelBrigade,
+  MINIMUM_BRIGADE_MEMBERS,
   splitByLevel,
 } from "./brigade.ts";
+import { FLOW_STEPS } from "./config.ts";
 import { COMPANY_OCCUPANCIES, OCCUPANCIES } from "./occupancies.ts";
-import { buildQuoteResult } from "./result.ts";
+import {
+  buildPessoaFisicaResult,
+  buildQuoteResult,
+  MINIMUM_BRIGADE_NOTICE,
+} from "./result.ts";
+import { HOTMART_BRIGADISTA_HREF } from "../constants.ts";
 
 describe("isenção", () => {
   it("é isento abaixo do limite da ocupação", () => {
@@ -23,9 +30,12 @@ describe("isenção", () => {
   });
 
   it("deixa de ser isento exatamente no limite", () => {
+    // A faixa de isenção só diz QUEM é isento; ela não é descontada da conta.
     const result = computeCompanyBrigade("D-1", 10);
-    assert.equal(result.exempt, true, "no limite, (10-10)/15 = 0 brigadistas");
-    assert.equal(result.total, 0);
+    assert.equal(result.exempt, false, "no limite já há exigência de brigada");
+    // teto(10/15) = 1, elevado ao piso legal de 3 (Art. 16 da IN 28, § 2º).
+    assert.equal(result.total, 3);
+    assert.equal(result.minimumApplied, true);
   });
 
   it("J-1, M-4 e M-11 são isentos em qualquer população", () => {
@@ -35,23 +45,39 @@ describe("isenção", () => {
   });
 });
 
-describe("razão teto((população − isenção) / N)", () => {
-  it("D-1 com 40 funcionários → 2 Básico", () => {
+describe("razão teto(população / N) — a isenção não é subtraída", () => {
+  it("caso da Ariele: D-1 com 40 funcionários → 3 Básico", () => {
+    // "1 a cada 15 funcionários daria 2,66 brigadista, arredondando para 3."
     const result = computeCompanyBrigade("D-1", 40);
-    assert.equal(result.total, 2); // teto((40-10)/15)
-    assert.deepEqual(result.breakdown, [{ level: "basico", count: 2 }]);
+    assert.equal(result.total, 3); // teto(40/15) = teto(2,66)
+    assert.deepEqual(result.breakdown, [{ level: "basico", count: 3 }]);
+    assert.equal(result.minimumApplied, false, "a conta já deu 3 sozinha");
+  });
+
+  it("caso da Ariele: I-2 com 80 funcionários → 8 (4 Básico + 4 Intermediário)", () => {
+    // "vai precisar de um brigadista a cada 10 ou seja, vai precisar de 8 brigadistas"
+    const result = computeCompanyBrigade("I-2", 80);
+    assert.equal(result.total, 8); // teto(80/10)
+    assert.deepEqual(result.breakdown, [
+      { level: "basico", count: 4 },
+      { level: "intermediario", count: 4 },
+    ]);
+    assert.equal(result.requiresQuote, false);
+    assert.equal(result.minimumApplied, false);
   });
 
   it("arredonda para cima", () => {
-    // M-3: isento < 5, 1 para cada 15 → teto((21-5)/15) = teto(1,07) = 2
-    assert.equal(computeCompanyBrigade("M-3", 21).total, 2);
+    // M-3: isento < 5, 1 para cada 15 → teto(46/15) = teto(3,06) = 4.
+    // Acima do piso de 3, para o arredondamento aparecer sozinho no resultado.
+    assert.equal(computeCompanyBrigade("M-3", 46).total, 4);
+    assert.equal(computeCompanyBrigade("M-3", 46).minimumApplied, false);
   });
 
   it("F-7 usa a razão mais severa (1 para cada 5)", () => {
-    // teto((25-5)/5) = 4, nível Intermediário
+    // teto(25/5) = 5, nível Intermediário
     const result = computeCompanyBrigade("F-7", 25);
-    assert.equal(result.total, 4);
-    assert.deepEqual(result.breakdown, [{ level: "intermediario", count: 4 }]);
+    assert.equal(result.total, 5);
+    assert.deepEqual(result.breakdown, [{ level: "intermediario", count: 5 }]);
   });
 });
 
@@ -77,22 +103,22 @@ describe("percentual da população fixa", () => {
 
 describe("divisão entre níveis", () => {
   it("I-2 divide 50/50 entre Básico e Intermediário", () => {
-    // teto((30-10)/10) = 2
+    // teto(30/10) = 3 → a sobra ímpar fica com o Básico
     const result = computeCompanyBrigade("I-2", 30);
-    assert.equal(result.total, 2);
+    assert.equal(result.total, 3);
     assert.deepEqual(result.breakdown, [
-      { level: "basico", count: 1 },
+      { level: "basico", count: 2 },
       { level: "intermediario", count: 1 },
     ]);
     assert.equal(result.requiresQuote, false);
   });
 
   it("I-3 divide 75/25 entre Intermediário e Avançado", () => {
-    // teto((50-10)/10) = 4 → 3 + 1
+    // teto(50/10) = 5 → 4 + 1
     const result = computeCompanyBrigade("I-3", 50);
-    assert.equal(result.total, 4);
+    assert.equal(result.total, 5);
     assert.deepEqual(result.breakdown, [
-      { level: "intermediario", count: 3 },
+      { level: "intermediario", count: 4 },
       { level: "avancado", count: 1 },
     ]);
     assert.equal(result.requiresQuote, true);
@@ -121,23 +147,30 @@ describe("divisão entre níveis", () => {
 });
 
 describe("M-1 (túnel)", () => {
-  it("até 200 m é isento", () => {
-    assert.equal(computeTunnelBrigade(200).exempt, true);
+  it("até 200 m é isento — e isento não recebe piso", () => {
+    const result = computeTunnelBrigade(200);
+    assert.equal(result.exempt, true);
+    assert.equal(result.total, 0);
+    assert.equal(result.minimumApplied, false);
   });
 
-  it("de 200 a 500 m → 2 brigadistas Básico", () => {
+  it("de 200 a 500 m: a faixa prevê 02, mas o piso legal leva a 3 Básico", () => {
     const result = computeTunnelBrigade(400);
-    assert.equal(result.total, 2);
-    assert.deepEqual(result.breakdown, [{ level: "basico", count: 2 }]);
+    assert.equal(result.total, 3);
+    assert.deepEqual(result.breakdown, [{ level: "basico", count: 3 }]);
+    assert.equal(result.minimumApplied, true);
+    assert.equal(result.exempt, false);
   });
 
-  it("de 500 a 1.000 m → 2 brigadistas, metade Básico metade Intermediário", () => {
+  it("de 500 a 1.000 m: 02 da faixa viram 3, divididos 50/50", () => {
     const result = computeTunnelBrigade(800);
-    assert.equal(result.total, 2);
+    assert.equal(result.total, 3);
+    // Mesma regra de divisão de sempre: a sobra ímpar fica com o Básico.
     assert.deepEqual(result.breakdown, [
-      { level: "basico", count: 1 },
+      { level: "basico", count: 2 },
       { level: "intermediario", count: 1 },
     ]);
+    assert.equal(result.minimumApplied, true);
   });
 
   it("acima de 1.000 m → 02 + 1 a cada 1.000 m, Intermediário", () => {
@@ -147,19 +180,79 @@ describe("M-1 (túnel)", () => {
     assert.deepEqual(computeTunnelBrigade(1500).breakdown, [
       { level: "intermediario", count: 3 },
     ]);
+    // A conta já dá 3 nessa faixa: o piso não entra, logo não há aviso.
+    assert.equal(computeTunnelBrigade(1500).minimumApplied, false);
+    assert.equal(computeTunnelBrigade(2001).minimumApplied, false);
   });
 });
 
 describe("condomínio", () => {
-  it("multiplica apartamentos × andares × blocos × fator de ocupação", () => {
-    // 4 × 10 × 2 × 2 pessoas = 160 → teto((160-10)/20) = 8
-    const result = computeCondoBrigade({
-      apartamentosPorAndar: 4,
-      andaresPorBloco: 10,
-      blocos: 2,
+  it("é sempre isento e sugere 1 brigadista por andar, por torre", () => {
+    // Fluxograma: "Todo residencial é isento" + "calcular uma pessoa por andar
+    // por torre" → 10 andares × 2 torres = 20 sugeridos, tudo Básico.
+    const result = computeCondoBrigade({ andaresPorBloco: 10, blocos: 2 });
+    assert.equal(result.exempt, true);
+    assert.equal(result.total, 20);
+    assert.deepEqual(result.breakdown, [{ level: "basico", count: 20 }]);
+    assert.equal(result.requiresQuote, false);
+    assert.equal(result.occupancyCode, "A-2");
+    assert.equal(result.population, undefined, "o fluxo não estima moradores");
+  });
+
+  it("caso da Ariele: 5 torres de 10 andares → 50 brigadistas sugeridos", () => {
+    const result = computeCondoBrigade({ andaresPorBloco: 10, blocos: 5 });
+    assert.equal(result.exempt, true);
+    assert.equal(result.total, 50);
+    assert.deepEqual(result.breakdown, [{ level: "basico", count: 50 }]);
+    assert.equal(result.minimumApplied, false);
+  });
+
+  it("o piso legal de 3 não vale para condomínio: a sugestão pode ser menor", () => {
+    // 1 torre de 1 andar = 1 sugerido. Não há exigência de brigada aqui, então
+    // o piso do Art. 16 ("quando houver a exigência") não se aplica.
+    const result = computeCondoBrigade({ andaresPorBloco: 1, blocos: 1 });
+    assert.equal(result.exempt, true);
+    assert.equal(result.total, 1, "sugestão comercial, não exigência legal");
+    assert.equal(result.minimumApplied, false);
+    assert.equal(
+      buildQuoteResult({
+        perfil: "condominio",
+        andares_por_bloco: "1",
+        blocos_por_torre: "1",
+      }).notice,
+      undefined,
+      "condomínio nunca recebe o aviso normativo",
+    );
+  });
+
+  it("o passo do condomínio só pergunta blocos e andares", () => {
+    // A pergunta de apartamentos por andar foi removida a pedido do cliente:
+    // não entrava na conta (1 brigadista por andar, por torre).
+    const ids = FLOW_STEPS["step-2-condominio"].fields.map((field) => field.id);
+    assert.deepEqual(ids, ["perfil", "blocos_por_torre", "andares_por_bloco"]);
+  });
+
+  it("desfecho mostra a isenção e a sugestão ao mesmo tempo", () => {
+    const result = buildQuoteResult({
+      perfil: "condominio",
+      andares_por_bloco: "10",
+      blocos_por_torre: "5",
     });
-    assert.equal(result.population, 160);
-    assert.equal(result.total, 8);
+    assert.equal(result.variant, "exemption");
+    assert.equal(result.brigade?.total, 50);
+    // O modal só exibe a contagem de um isento com este flag.
+    assert.equal(result.showBrigadeCount, true);
+    assert.match(result.info ?? "", /dispensado de constituir brigada/);
+    assert.match(result.text ?? "", /sugestão nossa, não uma exigência legal/);
+    assert.equal(
+      result.summary.some((item) => item.label === "População estimada"),
+      false,
+      "não inventamos população de condomínio",
+    );
+    // Isento compra avulso: link de inscrição única da Hotmart, não WhatsApp.
+    assert.equal(result.ctaHref, HOTMART_BRIGADISTA_HREF);
+    // Isento não tem exigência nenhuma: nada de aviso de mínimo de 3.
+    assert.equal(result.notice, undefined);
   });
 });
 
@@ -188,7 +281,23 @@ describe("resultado exibido ao cliente", () => {
     );
   });
 
-  it("Brigadista não vende pelo site: todo desfecho vai para o WhatsApp", () => {
+  it("isento de empresa vai para o link de compra única da Hotmart", () => {
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "D-1",
+      qtd_funcionarios: "9",
+    });
+    assert.equal(result.ctaHref, HOTMART_BRIGADISTA_HREF);
+    assert.equal(result.notice, undefined, "isento não recebe aviso de mínimo");
+  });
+
+  it("Pessoa Física vai direto para o link de compra única da Hotmart", () => {
+    const result = buildPessoaFisicaResult();
+    assert.equal(result.ctaHref, HOTMART_BRIGADISTA_HREF);
+    assert.equal(result.variant, "purchase");
+  });
+
+  it("turma obrigatória continua no WhatsApp da Ariele", () => {
     const result = buildQuoteResult({
       perfil: "empresa",
       ocupacao: "D-1",
@@ -197,7 +306,39 @@ describe("resultado exibido ao cliente", () => {
     assert.equal(result.variant, "purchase");
     assert.match(result.ctaHref, /^https:\/\/wa\.me\//);
     // A quantidade calculada precisa chegar escrita na mensagem da Ariele.
-    assert.match(decodeURIComponent(result.ctaHref), /2 brigadista\(s\): 2 Básico/);
+    assert.match(decodeURIComponent(result.ctaHref), /3 brigadista\(s\): 3 Básico/);
+  });
+
+  it("a mensagem da Ariele leva o número JÁ com o piso aplicado", () => {
+    // D-1 com 10: a conta dá 1, a tela mostra 3 — a mensagem tem que dizer 3.
+    const compra = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "D-1",
+      qtd_funcionarios: "10",
+    });
+    const compraText = decodeURIComponent(compra.ctaHref);
+    assert.match(compraText, /preciso de 3 brigadista\(s\): 3 Básico/);
+    assert.equal(/preciso de 1 brigadista/.test(compraText), false);
+
+    // Mesma coisa no desfecho de orçamento (Avançado): M-9 com 12 dá 2 → 3.
+    const orcamento = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "M-9",
+      qtd_funcionarios: "12",
+    });
+    assert.equal(orcamento.variant, "quote");
+    assert.match(
+      decodeURIComponent(orcamento.ctaHref),
+      /preciso de 3 brigadista\(s\): 3 Avançado/,
+    );
+
+    // E no túnel de 400 m, que a faixa dimensionava em 02.
+    const tunel = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "M-1",
+      metros_tunel: "400",
+    });
+    assert.match(decodeURIComponent(tunel.ctaHref), /preciso de 3 brigadista\(s\): 3 Básico/);
   });
 
   it("Avançado não vende online: cai no WhatsApp", () => {
@@ -208,6 +349,185 @@ describe("resultado exibido ao cliente", () => {
     });
     assert.equal(result.variant, "quote");
     assert.match(result.ctaHref, /^https:\/\/wa\.me\//);
+  });
+});
+
+describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
+  it("o piso é 3", () => {
+    assert.equal(MINIMUM_BRIGADE_MEMBERS, 3);
+  });
+
+  it("cálculo que dá 1 vira 3 e carrega o aviso", () => {
+    // D-1 com 10 funcionários: teto(10/15) = 1 brigadista.
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "D-1",
+      qtd_funcionarios: "10",
+    });
+    assert.equal(result.brigade?.exempt, false);
+    assert.equal(result.brigade?.total, 3, "o número exibido é o mínimo legal");
+    assert.deepEqual(result.brigade?.breakdown, [{ level: "basico", count: 3 }]);
+    assert.equal(result.brigade?.minimumApplied, true);
+    assert.equal(result.notice, MINIMUM_BRIGADE_NOTICE);
+    assert.match(result.notice ?? "", /Art\. 16 da IN 28, § 2º/);
+    assert.match(result.notice ?? "", /independente do previsto no caput/);
+  });
+
+  it("cálculo que dá 2 vira 3 e carrega o aviso", () => {
+    // M-3: isento < 5, 1 a cada 15 → teto(21/15) = 2.
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "M-3",
+      qtd_funcionarios: "21",
+    });
+    assert.equal(result.brigade?.exempt, false);
+    assert.equal(result.brigade?.total, 3);
+    assert.deepEqual(result.brigade?.breakdown, [{ level: "basico", count: 3 }]);
+    assert.equal(result.brigade?.minimumApplied, true);
+    assert.equal(result.notice, MINIMUM_BRIGADE_NOTICE);
+  });
+
+  it("o piso também vale para a regra de percentual", () => {
+    // L-1: 50% da população fixa, sem isenção → teto(4 × 0,5) = 2.
+    const result = computeCompanyBrigade("L-1", 4);
+    assert.equal(result.exempt, false);
+    assert.equal(result.total, 3);
+    assert.equal(result.minimumApplied, true);
+  });
+
+  it("cálculo que já dá exatamente 3 continua 3, sem aviso", () => {
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "D-1",
+      qtd_funcionarios: "40",
+    });
+    assert.equal(result.brigade?.total, 3);
+    assert.equal(result.brigade?.minimumApplied, false);
+    assert.equal(result.notice, undefined);
+  });
+
+  it("cálculo que dá 8 continua 8, sem aviso", () => {
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "I-2",
+      qtd_funcionarios: "80",
+    });
+    assert.equal(result.brigade?.total, 8, "o piso não mexe em quem já passa dele");
+    assert.deepEqual(result.brigade?.breakdown, [
+      { level: "basico", count: 4 },
+      { level: "intermediario", count: 4 },
+    ]);
+    assert.equal(result.brigade?.minimumApplied, false);
+    assert.equal(result.notice, undefined);
+  });
+
+  it("isento continua com 0, sem piso e sem aviso", () => {
+    // O piso só existe "quando houver a exigência de brigadista orgânico".
+    const porLimite = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "D-1",
+      qtd_funcionarios: "9",
+    });
+    assert.equal(porLimite.variant, "exemption");
+    assert.equal(porLimite.brigade?.total, 0);
+    assert.deepEqual(porLimite.brigade?.breakdown, []);
+    assert.equal(porLimite.brigade?.minimumApplied, false);
+    assert.equal(porLimite.notice, undefined);
+
+    const sempreIsento = buildQuoteResult({ perfil: "empresa", ocupacao: "J-1" });
+    assert.equal(sempreIsento.variant, "exemption");
+    assert.equal(sempreIsento.brigade?.total, 0);
+    assert.equal(sempreIsento.notice, undefined);
+
+    // Túnel curto também é isento: nada de piso.
+    const tunelCurto = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "M-1",
+      metros_tunel: "150",
+    });
+    assert.equal(tunelCurto.variant, "exemption");
+    assert.equal(tunelCurto.brigade?.total, 0);
+    assert.equal(tunelCurto.notice, undefined);
+  });
+
+  it("condomínio 5 torres × 10 andares continua 50, isento e sem aviso", () => {
+    const result = buildQuoteResult({
+      perfil: "condominio",
+      andares_por_bloco: "10",
+      blocos_por_torre: "5",
+    });
+    assert.equal(result.brigade?.exempt, true);
+    assert.equal(result.brigade?.total, 50);
+    assert.equal(result.brigade?.minimumApplied, false);
+    assert.equal(result.notice, undefined);
+  });
+
+  it("túnel de 400 m (faixa de 02) sobe para 3", () => {
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "M-1",
+      metros_tunel: "400",
+    });
+    assert.equal(result.brigade?.exempt, false);
+    assert.equal(result.brigade?.total, 3);
+    assert.equal(result.brigade?.minimumApplied, true);
+    assert.equal(result.notice, MINIMUM_BRIGADE_NOTICE);
+  });
+
+  it("redistribui os níveis sobre o total elevado, somando 3", () => {
+    // I-2 com 10 funcionários: teto(10/10) = 1, que sozinho ficaria todo no
+    // Básico. Com o piso, os 3 são divididos pelos MESMOS shares (50/50).
+    const result = computeCompanyBrigade("I-2", 10);
+    assert.equal(result.total, 3);
+    assert.deepEqual(result.breakdown, [
+      { level: "basico", count: 2 },
+      { level: "intermediario", count: 1 },
+    ]);
+    const soma = result.breakdown.reduce((acc, entry) => acc + entry.count, 0);
+    assert.equal(soma, 3, "o breakdown precisa fechar com o total exibido");
+    assert.equal(result.minimumApplied, true);
+  });
+
+  it("também avisa no desfecho de orçamento (nível Avançado)", () => {
+    // M-9: isento < 5, 1 a cada 10, tudo Avançado → teto(12/10) = 2 → 3.
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "M-9",
+      qtd_funcionarios: "12",
+    });
+    assert.equal(result.variant, "quote");
+    assert.equal(result.brigade?.total, 3);
+    assert.deepEqual(result.brigade?.breakdown, [{ level: "avancado", count: 3 }]);
+    assert.equal(result.notice, MINIMUM_BRIGADE_NOTICE);
+  });
+
+  it("o piso pode fazer surgir o nível Avançado e mandar o caso para orçamento", () => {
+    // J-4 (isento < 5, 1 a cada 10, 50% Intermediário / 50% Avançado) com 10
+    // funcionários: a conta dava 1, que caía todo no Intermediário e vendia
+    // online. Com 3, a metade Avançado aparece — e Avançado é presencial.
+    const result = buildQuoteResult({
+      perfil: "empresa",
+      ocupacao: "J-4",
+      qtd_funcionarios: "10",
+    });
+    assert.equal(result.brigade?.total, 3);
+    assert.deepEqual(result.brigade?.breakdown, [
+      { level: "intermediario", count: 2 },
+      { level: "avancado", count: 1 },
+    ]);
+    assert.equal(result.brigade?.requiresQuote, true);
+    assert.equal(result.variant, "quote");
+    assert.equal(result.notice, MINIMUM_BRIGADE_NOTICE);
+  });
+
+  it("o aviso explica o número exibido, sem contradizê-lo", () => {
+    // Regressão do bug que motivou a mudança: o texto não pode mandar formar um
+    // número diferente do que está na tela.
+    assert.match(MINIMUM_BRIGADE_NOTICE, /Por que 3 brigadistas/);
+    assert.match(
+      MINIMUM_BRIGADE_NOTICE,
+      /“Quando houver a exigência de brigadista orgânico, o número mínimo a ser implementado será de 03 \(três\) brigadistas orgânicos, independente do previsto no caput deste artigo\.”/,
+    );
   });
 });
 

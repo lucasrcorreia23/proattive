@@ -9,15 +9,16 @@ export const SITE = {
 } as const;
 
 export const NAV_LINKS = [
-  { label: "HOME", href: "https://proattive.com.br/", external: true },
-  { label: "QUEM SOMOS", href: "https://proattive.com.br/#quem-somos", external: true },
-  { label: "SOLUÇÕES", href: "https://proattive.com.br/#solucoes", external: true },
-  { label: "POR QUE PROATTIVE?", href: "https://proattive.com.br/#porque", external: true },
-  { label: "CASES", href: "https://proattive.com.br/#cases", external: true },
-  { label: "CLIENTES", href: "https://proattive.com.br/#clientes", external: true },
-  { label: "CONTATO", href: "https://proattive.com.br/#contato", external: true },
-  { label: "BLOG", href: "https://proattive.com.br/blog/", external: true },
-  { label: "CURSOS", href: "/", external: false },
+  { label: "HOME", href: "https://proattive.com.br/", external: true, highlight: false },
+  { label: "QUEM SOMOS", href: "https://proattive.com.br/#quem-somos", external: true, highlight: false },
+  { label: "SOLUÇÕES", href: "https://proattive.com.br/#solucoes", external: true, highlight: false },
+  { label: "POR QUE PROATTIVE?", href: "https://proattive.com.br/#porque", external: true, highlight: false },
+  { label: "CASES", href: "https://proattive.com.br/#cases", external: true, highlight: false },
+  { label: "CLIENTES", href: "https://proattive.com.br/#clientes", external: true, highlight: false },
+  { label: "CONTATO", href: "https://proattive.com.br/#contato", external: true, highlight: false },
+  { label: "BLOG", href: "https://proattive.com.br/blog/", external: true, highlight: false },
+  // CURSOS = este site. Estilizado como pílula (mesmo visual do menu do site principal).
+  { label: "CURSOS", href: "/", external: false, highlight: true },
 ] as const;
 
 export const ANCHOR_LINKS = [
@@ -58,10 +59,17 @@ export function deiseWhatsappHref(message?: string) {
 }
 
 /**
- * Checkout do curso de Carros Elétricos na Hotmart — único curso vendido
- * direto pelo site. Brigadista e Projeto Preventivo passam pelo WhatsApp.
+ * Checkout do curso de Carros Elétricos na Hotmart. Projeto Preventivo continua
+ * passando pelo WhatsApp.
  */
 export const HOTMART_CARROS_ELETRICOS_HREF = "https://go.hotmart.com/R106034478B";
+
+/**
+ * Checkout do curso de Brigadista na Hotmart — link de inscrição única. Usado
+ * na compra da Pessoa Física e nos desfechos de isenção (empresa e condomínio),
+ * que compram avulso. Turmas obrigatórias seguem orçadas pela Ariele.
+ */
+export const HOTMART_BRIGADISTA_HREF = "https://pay.hotmart.com/R106035323R";
 
 type BrigadeLike = {
   total: number;
@@ -81,14 +89,14 @@ function describeBrigade(brigade: BrigadeLike) {
 }
 
 /**
- * Mensagens pré-preenchidas do WhatsApp para cada desfecho do filtro. O curso
- * de Brigadista não é vendido pelo site: todo caminho termina no atendimento
- * da Ariele, com o resultado do filtro já escrito na mensagem.
+ * Mensagens pré-preenchidas do WhatsApp para os desfechos do filtro que passam
+ * pelo atendimento da Ariele — turma obrigatória (compra) e nível Avançado
+ * (orçamento), com o resultado do filtro já escrito na mensagem.
+ *
+ * Pessoa Física e isentos NÃO estão aqui: compram avulso pelo link da Hotmart
+ * (`HOTMART_BRIGADISTA_HREF`).
  */
 export const ARIELE_WHATSAPP_MESSAGES = {
-  isento:
-    "Olá! Fiz o filtro no site e minha edificação é isenta de brigada, mas quero treinar a equipe com a condição especial.",
-  pessoaFisica: "Olá! Quero fazer a compra individual (Pessoa Física) do curso.",
   avancado: (brigade: BrigadeLike) =>
     `Olá! Fiz o filtro no site (ocupação ${brigade.occupancyCode}) e preciso de ${brigade.total} brigadista(s): ${describeBrigade(brigade)}. Como envolve nível Avançado, quero um orçamento.`,
   compra: (brigade: BrigadeLike) =>

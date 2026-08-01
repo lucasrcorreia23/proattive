@@ -104,7 +104,11 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium uppercase tracking-wide text-brand transition-colors hover:text-accent"
+                className={
+                  link.highlight
+                    ? "inline-block rounded-[8px] bg-[#FFB367] px-4 text-center text-sm font-medium uppercase leading-[2.5em] tracking-wide text-white transition-colors hover:bg-accent"
+                    : "text-sm font-medium uppercase tracking-wide text-brand transition-colors hover:text-accent"
+                }
                 {...(link.external
                   ? { target: "_blank", rel: "noopener noreferrer" }
                   : {})}
@@ -151,7 +155,11 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium uppercase tracking-wide text-brand"
+                className={
+                  link.highlight
+                    ? "inline-block self-start rounded-[8px] bg-[#FFB367] px-4 text-center text-sm font-medium uppercase leading-[2.5em] tracking-wide text-white"
+                    : "text-sm font-medium uppercase tracking-wide text-brand"
+                }
                 onClick={() => setOpen(false)}
                 {...(link.external
                   ? { target: "_blank", rel: "noopener noreferrer" }

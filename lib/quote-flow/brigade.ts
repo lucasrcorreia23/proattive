@@ -6,8 +6,6 @@
  */
 
 import {
-  CONDO_RULE,
-  PEOPLE_PER_APARTMENT,
   TUNNEL_BANDS,
   getOccupancy,
   type CourseLevel,
@@ -20,16 +18,27 @@ export type BrigadeBreakdown = { level: CourseLevel; count: number };
 export type BrigadeResult = {
   /** Cliente dispensado de constituir brigada. */
   exempt: boolean;
-  /** Total de brigadistas a treinar (0 quando isento). */
+  /**
+   * Total de brigadistas a treinar, JÁ com o piso legal de 3 aplicado quando há
+   * exigência de brigada (ver `MINIMUM_BRIGADE_MEMBERS`). 0 quando isento —
+   * exceto no condomínio, que é isento mas recebe uma quantidade SUGERIDA
+   * (ver `computeCondoBrigade`).
+   */
   total: number;
-  /** Distribuição do total entre os níveis de curso. */
+  /** Distribuição do `total` entre os níveis de curso. */
   breakdown: BrigadeBreakdown[];
   /**
    * Envolve nível Avançado ⇒ não pode ser vendido online: tem aula presencial
    * e precisa ser orçado à parte (nota da Ariele no fluxo).
    */
   requiresQuote: boolean;
-  /** População considerada no cálculo (ausente no ramo túnel). */
+  /**
+   * O piso legal de 3 elevou o número: a conta da ocupação deu menos que isso.
+   * É o que dispara o aviso normativo na tela (ver `MINIMUM_BRIGADE_NOTICE`).
+   * Sempre `false` para isentos e para o condomínio (sugestão, não exigência).
+   */
+  minimumApplied: boolean;
+  /** População considerada no cálculo (ausente nos ramos túnel e condomínio). */
   population?: number;
   occupancyCode: string;
 };
@@ -70,9 +79,72 @@ function hasAdvanced(breakdown: BrigadeBreakdown[]): boolean {
 }
 
 /**
+ * Piso legal de brigadistas — Art. 16, § 2º da IN 28: "Quando houver a exigência
+ * de brigadista orgânico, o número mínimo a ser implementado será de 03 (três)
+ * brigadistas orgânicos, independente do previsto no caput deste artigo."
+ *
+ * "Independente do previsto no caput" ⇒ o piso SE SOBREPÕE à conta da ocupação:
+ * o total entregue é `max(calculado, 3)`. Vale para todo resultado com exigência
+ * de brigada (não isento), inclusive o túnel. NÃO vale para isentos — o piso só
+ * existe "quando houver a exigência" — nem para o condomínio, cuja quantidade é
+ * uma sugestão comercial, não uma exigência legal.
+ */
+export const MINIMUM_BRIGADE_MEMBERS = 3;
+
+/** Dados que identificam o cálculo, comuns a todos os desfechos. */
+type BrigadeBase = { occupancyCode: string; population?: number };
+
+/** Desfecho isento: sem exigência, logo sem piso e sem brigadista. */
+function exemptResult(base: BrigadeBase): BrigadeResult {
+  return {
+    ...base,
+    exempt: true,
+    total: 0,
+    breakdown: [],
+    requiresQuote: false,
+    minimumApplied: false,
+  };
+}
+
+/**
+ * Fecha o dimensionamento de quem TEM exigência de brigada, aplicando o piso
+ * legal de 3 e redistribuindo os níveis sobre o total já elevado — a divisão
+ * por percentual é a mesma (`splitByLevel`, com os shares da ocupação), só muda
+ * o total que entra nela.
+ *
+ * `computed <= 0` significa que não sobrou exigência nenhuma (ex.: percentual de
+ * uma população zerada): aí o desfecho é isento e o piso não se aplica.
+ */
+function requiredResult(
+  base: BrigadeBase,
+  computed: number,
+  levels: LevelShare[],
+): BrigadeResult {
+  if (computed <= 0) return exemptResult(base);
+
+  const total = Math.max(computed, MINIMUM_BRIGADE_MEMBERS);
+  const breakdown = splitByLevel(total, levels);
+
+  return {
+    ...base,
+    exempt: false,
+    total,
+    breakdown,
+    // Recalculado sobre o breakdown final: o piso pode fazer surgir um nível
+    // Avançado que a conta original, menor, não alcançava.
+    requiresQuote: hasAdvanced(breakdown),
+    minimumApplied: total > computed,
+  };
+}
+
+/**
  * Aplica uma regra de ocupação a uma população.
  *
- * Fórmula confirmada com o cliente: `teto((população − isenção) / N)`.
+ * Fórmula confirmada por escrito pela Ariele: `teto(população / N)`.
+ * A faixa de isenção (`exemptBelow`) define QUEM é dispensado, mas NÃO é
+ * subtraída da população no cálculo. Exemplos dela:
+ *   - D-1 (isento < 10, 1 a cada 15) com 40 funcionários → 40/15 = 2,66 → 3.
+ *   - I-2 (isento < 10, 1 a cada 10) com 80 funcionários → 80/10 = 8.
  */
 function applyRule(
   rule: Occupancy["rule"],
@@ -83,34 +155,15 @@ function applyRule(
 
   switch (rule.kind) {
     case "always-exempt":
-      return { ...base, exempt: true, total: 0, breakdown: [], requiresQuote: false };
+      return exemptResult(base);
 
-    case "percent": {
+    case "percent":
       // "50% / 75% da população fixa": sem isenção, aplica direto sobre o total.
-      const total = Math.ceil(population * rule.percent);
-      const breakdown = splitByLevel(total, rule.levels);
-      return {
-        ...base,
-        exempt: total === 0,
-        total,
-        breakdown,
-        requiresQuote: hasAdvanced(breakdown),
-      };
-    }
+      return requiredResult(base, Math.ceil(population * rule.percent), rule.levels);
 
     case "ratio": {
-      if (population < rule.exemptBelow) {
-        return { ...base, exempt: true, total: 0, breakdown: [], requiresQuote: false };
-      }
-      const total = Math.ceil((population - rule.exemptBelow) / rule.perPeople);
-      const breakdown = splitByLevel(total, rule.levels);
-      return {
-        ...base,
-        exempt: total === 0,
-        total,
-        breakdown,
-        requiresQuote: hasAdvanced(breakdown),
-      };
+      if (population < rule.exemptBelow) return exemptResult(base);
+      return requiredResult(base, Math.ceil(population / rule.perPeople), rule.levels);
     }
 
     case "tunnel":
@@ -131,46 +184,55 @@ export function computeCompanyBrigade(
   return applyRule(occupancy.rule, population, occupancyCode);
 }
 
-/** Ramo M-1: dimensionado pela metragem do túnel. */
+/**
+ * Ramo M-1: dimensionado pela metragem do túnel.
+ *
+ * Também há exigência de brigada aqui, então o piso legal de 3 vale igual: as
+ * faixas de 200-500 m e 500-1.000 m preveem 02 brigadistas e sobem para 3.
+ */
 export function computeTunnelBrigade(meters: number): BrigadeResult {
   const band = TUNNEL_BANDS.find((item) => meters <= item.maxMeters) ?? TUNNEL_BANDS[3];
   const base = { occupancyCode: "M-1" };
 
-  if (band.exempt) {
-    return { ...base, exempt: true, total: 0, breakdown: [], requiresQuote: false };
-  }
+  if (band.exempt) return exemptResult(base);
 
   // Acima de 1.000 m: 02 brigadistas + 1 a cada 1.000 m adicionais.
-  const total =
+  const computed =
     band.brigadistas ?? 2 + Math.floor((meters - 1000) / 1000) + (meters % 1000 > 0 ? 1 : 0);
-  const breakdown = splitByLevel(total, [...band.levels]);
 
-  return {
-    ...base,
-    exempt: false,
-    total,
-    breakdown,
-    requiresQuote: hasAdvanced(breakdown),
-  };
+  return requiredResult(base, computed, [...band.levels]);
 }
 
 export type CondoInput = {
-  apartamentosPorAndar: number;
   andaresPorBloco: number;
   blocos: number;
 };
 
-/** População estimada do condomínio a partir das 3 perguntas do fluxo. */
-export function condoPopulation(input: CondoInput): number {
-  return (
-    input.apartamentosPorAndar *
-    input.andaresPorBloco *
-    input.blocos *
-    PEOPLE_PER_APARTMENT
-  );
-}
-
-/** Ramo Condomínio: tratado como A-2 (multifamiliar vertical). */
+/**
+ * Ramo Condomínio: tratado como A-2 (multifamiliar vertical).
+ *
+ * Fluxograma (board do Figma): "Todo residencial é isento" → "Informar isenção,
+ * porém oferecer link com desconto / Calcular uma pessoa por andar por torre".
+ * Logo: SEMPRE isento, sem faixa de isenção nem população mínima, e a sugestão
+ * comercial é `andares × torres`, tudo no nível Básico.
+ * Exemplo da Ariele: 5 torres de 10 andares = 50 brigadistas sugeridos.
+ *
+ * `population` fica ausente de propósito: o fluxo não estima moradores, e o
+ * resumo do resultado só exibe população quando ela existe.
+ *
+ * O piso legal de 3 NÃO se aplica: ele só existe "quando houver a exigência de
+ * brigadista orgânico", e aqui não há exigência nenhuma — o número é sugestão
+ * comercial. Por isso `minimumApplied` é sempre `false` e não há aviso.
+ */
 export function computeCondoBrigade(input: CondoInput): BrigadeResult {
-  return applyRule(CONDO_RULE, condoPopulation(input), "A-2");
+  const total = input.andaresPorBloco * input.blocos;
+
+  return {
+    exempt: true,
+    total,
+    breakdown: splitByLevel(total, [{ level: "basico", share: 1 }]),
+    requiresQuote: false,
+    minimumApplied: false,
+    occupancyCode: "A-2",
+  };
 }

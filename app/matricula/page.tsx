@@ -13,7 +13,7 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { QuoteWizardSection } from "@/components/quote-wizard/QuoteWizardSection";
 
 export const metadata: Metadata = {
-  title: "Curso Brigada de Incêndio e Lei Lucas | ProAttive",
+  title: "Curso Brigada de Incêndio e Lei Lucas",
   description:
     "Treinamento certificado em conformidade com a Lei 13.722/18 e NR-23.",
 };

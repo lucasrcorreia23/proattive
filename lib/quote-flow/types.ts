@@ -31,6 +31,12 @@ export type QuoteResult = {
   summary: Array<{ label: string; value: string }>;
   info?: string;
   text?: string;
+  /**
+   * Observação normativa exibida em destaque no modal. Hoje só é preenchida
+   * quando o piso legal de 3 elevou o total de um resultado NÃO isento: explica
+   * por que o número exibido é 3 (ver `MINIMUM_BRIGADE_NOTICE`).
+   */
+  notice?: string;
   ctaLabel: string;
   ctaHref: string;
   /**
@@ -39,6 +45,12 @@ export type QuoteResult = {
    * `purchase` — segue para o link de compra.
    */
   variant: "purchase" | "exemption" | "quote";
+  /**
+   * Força a exibição da contagem de brigadistas mesmo em desfecho isento.
+   * Usado pelo condomínio, que é isento mas recebe uma quantidade SUGERIDA.
+   * Ausente = mostra a contagem só quando não é isento.
+   */
+  showBrigadeCount?: boolean;
   /** Dimensionamento calculado. Ausente na compra direta da Pessoa Física. */
   brigade?: BrigadeResult;
   /** Oculta o bloco de resumo no modal (compra direta, sem filtro). */

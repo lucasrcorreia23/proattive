@@ -23,7 +23,10 @@ export type OccupancyRule =
   | { kind: "percent"; percent: number; levels: LevelShare[] }
   /** M-1: dimensionado por metragem de túnel, não por população. */
   | { kind: "tunnel" }
-  /** A-1 / A-2: entram pelo ramo Condomínio, com população calculada. */
+  /**
+   * A-1 / A-2: entram pelo ramo Condomínio. Todo residencial é isento; o fluxo
+   * só sugere 1 brigadista por andar, por torre. Ver `computeCondoBrigade`.
+   */
   | { kind: "residential" };
 
 export type Occupancy = {
@@ -51,23 +54,6 @@ const INTERMEDIARIO_50_AVANCADO_50: LevelShare[] = [
   { level: "intermediario", share: 0.5 },
   { level: "avancado", share: 0.5 },
 ];
-
-/**
- * Regra do ramo Condomínio (A-1 horizontal / A-2 vertical).
- *
- * TODO(Ariele): o fluxo em PDF encerra o ramo Condomínio sem regra e A-1/A-2 não
- * aparecem na tabela de Empresas. Os valores abaixo são PROVISÓRIOS — confirmar
- * isenção, razão, nível e quantas pessoas contar por apartamento.
- */
-export const CONDO_RULE: Extract<OccupancyRule, { kind: "ratio" }> = {
-  kind: "ratio",
-  exemptBelow: 10,
-  perPeople: 20,
-  levels: BASICO,
-};
-
-/** TODO(Ariele): confirmar o fator de ocupação por apartamento. */
-export const PEOPLE_PER_APARTMENT = 2;
 
 /** Faixas de dimensionamento do M-1 (túnel). */
 export const TUNNEL_BANDS = [
@@ -99,16 +85,18 @@ export const TUNNEL_BANDS = [
 /**
  * Descrições exibidas no seletor de ocupação.
  *
- * CONFIRMADAS (captura do sistema do Corpo de Bombeiros enviada pela Ariele):
- * A-1 a F-1.
+ * Fonte: IN 1 - P2, Anexo A, Tabela 1 - Classificação das Ocupações (Normas de
+ * Segurança Contra Incêndio / CBMSC, 2024), enviada pela Ariele. O texto antes
+ * dos parênteses vem da coluna "Descrição"; os exemplos entre parênteses vêm da
+ * coluna "Destinação" — é por eles que o cliente se reconhece no seletor.
  *
- * TODO(Ariele): as demais estão `null` de propósito. Preferimos mostrar
- * "descrição a confirmar" a arriscar um texto errado, porque o cliente escolhe
- * a ocupação pela descrição e um erro aqui vende o curso errado. Assim que a
- * Ariele mandar a lista completa do sistema, basta preencher as strings.
+ * As 63 divisões (A-1 a M-11) estão confirmadas. Se alguma voltar a `null`, o
+ * seletor mostra "descrição a confirmar": preferimos isso a arriscar um texto
+ * errado, porque o cliente escolhe a ocupação pela descrição e um erro aqui
+ * dimensiona a brigada errada.
  */
 const LABELS: Record<string, { group: string; description: string | null }> = {
-  "A-1": { group: "residencial", description: "Multifamiliar Horizontal" },
+  "A-1": { group: "residencial", description: "Multifamiliar Horizontal e Unifamiliar" },
   "A-2": { group: "residencial", description: "Multifamiliar Vertical" },
   "A-3": { group: "residencial", description: "Coletiva" },
   "B-1": { group: "serviço de hospedagem", description: "Hotel e Assemelhado" },
@@ -116,7 +104,7 @@ const LABELS: Record<string, { group: string; description: string | null }> = {
   "C-1": { group: "comercial", description: "Comércio Com Baixa Carga de Incêndio" },
   "C-2": {
     group: "comercial",
-    description: "Comércio Com Média e Alta Carga de Incêndio",
+    description: "Comércio Com Média, Alta Ou Altíssima Carga de Incêndio",
   },
   "C-3": { group: "comercial", description: "Shopping Centers" },
   "D-1": {
@@ -148,51 +136,197 @@ const LABELS: Record<string, { group: string; description: string | null }> = {
     group: "local de reunião de público",
     description: "Local Onde Há Objeto de Valor Inestimável",
   },
-  // --- daqui para baixo, descrições pendentes de confirmação ---
-  "F-2": { group: "local de reunião de público", description: null },
-  "F-3": { group: "local de reunião de público", description: null },
-  "F-4": { group: "local de reunião de público", description: null },
-  "F-5": { group: "local de reunião de público", description: null },
-  "F-6": { group: "local de reunião de público", description: null },
-  "F-7": { group: "local de reunião de público", description: null },
-  "F-8": { group: "local de reunião de público", description: null },
-  "F-9": { group: "local de reunião de público", description: null },
-  "F-10": { group: "local de reunião de público", description: null },
-  "F-11": { group: "local de reunião de público", description: null },
-  "G-1": { group: "serviço automotivo", description: null },
-  "G-2": { group: "serviço automotivo", description: null },
-  "G-3": { group: "serviço automotivo", description: null },
-  "G-4": { group: "serviço automotivo", description: null },
-  "G-5": { group: "serviço automotivo", description: null },
-  "H-1": { group: "serviço de saúde e institucional", description: null },
-  "H-2": { group: "serviço de saúde e institucional", description: null },
-  "H-3": { group: "serviço de saúde e institucional", description: null },
-  "H-4": { group: "serviço de saúde e institucional", description: null },
-  "H-5": { group: "serviço de saúde e institucional", description: null },
-  "H-6": { group: "serviço de saúde e institucional", description: null },
-  "I-1": { group: "industrial", description: null },
-  "I-2": { group: "industrial", description: null },
-  "I-3": { group: "industrial", description: null },
-  "J-1": { group: "depósito", description: null },
-  "J-2": { group: "depósito", description: null },
-  "J-3": { group: "depósito", description: null },
-  "J-4": { group: "depósito", description: null },
-  "K-1": { group: "K", description: null },
-  "K-2": { group: "K", description: null },
-  "L-1": { group: "explosivo", description: null },
-  "L-2": { group: "explosivo", description: null },
-  "L-3": { group: "explosivo", description: null },
+  "F-2": {
+    group: "local de reunião de público",
+    description:
+      "Local Religioso e Velório (igrejas, capelas, templos, sinagogas, mesquitas, cemitérios, crematórios, salas de funerais)",
+  },
+  "F-3": {
+    group: "local de reunião de público",
+    description:
+      "Centro Esportivo e de Exibição (arenas, estádios, ginásios, piscinas, rodeios, autódromos, sambódromos, pista de patinação, todos com arquibancadas)",
+  },
+  "F-4": {
+    group: "local de reunião de público",
+    description:
+      "Estação e Terminal de Passageiros (estações rodoferroviárias e marítimas, portos, metrô, aeroportos, heliponto, estações de transbordo)",
+  },
+  "F-5": {
+    group: "local de reunião de público",
+    description:
+      "Arte Cênica e Auditório (teatros, cinemas, óperas, auditórios de estúdios de rádio e televisão, auditórios em geral)",
+  },
+  "F-6": {
+    group: "local de reunião de público",
+    description:
+      "Clubes Sociais e Diversão (salões de festa e buffet, centro de eventos, restaurantes dançantes, clubes sociais, bingo, bilhares, tiro ao alvo, boliche)",
+  },
+  "F-7": {
+    group: "local de reunião de público",
+    description: "Construção Provisória (circos, palcos, estruturas temporárias diversas)",
+  },
+  "F-8": {
+    group: "local de reunião de público",
+    description:
+      "Local Para Refeição (restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas)",
+  },
+  "F-9": {
+    group: "local de reunião de público",
+    description:
+      "Recreação Pública (jardim zoológico, parques recreativos e temáticos, parques aquáticos)",
+  },
+  "F-10": {
+    group: "local de reunião de público",
+    description:
+      "Exposição de Objetos Ou Animais (salões e salas para exposição de objetos ou animais, em edificações permanentes)",
+  },
+  "F-11": {
+    group: "local de reunião de público",
+    description: "Boate (casas noturnas, danceterias, discotecas)",
+  },
+  "G-1": {
+    group: "serviço automotivo",
+    description:
+      "Garagem Sem Acesso de Público e Sem Abastecimento (garagens automáticas, garagens com manobristas, estacionamentos)",
+  },
+  "G-2": {
+    group: "serviço automotivo",
+    description:
+      "Garagem Com Acesso de Público e Sem Abastecimento (garagens coletivas sem automação, exceto veículos de carga e coletivos)",
+  },
+  "G-3": {
+    group: "serviço automotivo",
+    description:
+      "Local Dotado de Abastecimento de Combustível (postos de abastecimento com tanque subterrâneo e serviço, garagens, exceto veículos de carga e coletivos)",
+  },
+  "G-4": {
+    group: "serviço automotivo",
+    description:
+      "Serviço de Conservação, Manutenção e Reparos (oficinas de conserto de veículos, borracharia sem recauchutagem, oficinas e garagens de veículos de carga e coletivos, máquinas agrícolas e rodoviárias, retificadoras de motores)",
+  },
+  "G-5": {
+    group: "serviço automotivo",
+    description: "Hangares (abrigos para aeronaves com ou sem abastecimento)",
+  },
+  "H-1": {
+    group: "serviço de saúde e institucional",
+    description:
+      "Hospital Veterinário e Assemelhados (hospitais, clínicas e consultórios veterinários, incluindo alojamento com ou sem adestramento)",
+  },
+  "H-2": {
+    group: "serviço de saúde e institucional",
+    description:
+      "Local Onde Pessoas Requerem Cuidados Especiais Por Limitações Físicas Ou Mentais (asilos, orfanatos, abrigos geriátricos, hospitais psiquiátricos, reformatórios, tratamento de dependentes de drogas e álcool, todos sem celas)",
+  },
+  "H-3": {
+    group: "serviço de saúde e institucional",
+    description:
+      "Hospitalar (hospitais, casas de saúde, prontos-socorros, clínicas com internação, ambulatórios e postos de atendimento de urgência, postos de saúde e puericultura com internação)",
+  },
+  "H-4": {
+    group: "serviço de saúde e institucional",
+    description:
+      "Edificação Pública (edificações dos poderes executivo, legislativo e judiciário, cartórios, quartéis, delegacias, postos policiais, consulados)",
+  },
+  "H-5": {
+    group: "serviço de saúde e institucional",
+    description:
+      "Local Onde A Liberdade das Pessoas Sofre Restrições (hospitais psiquiátricos, manicômios, reformatórios, prisões em geral, casas de detenção, penitenciárias, presídios, todos com celas)",
+  },
+  "H-6": {
+    group: "serviço de saúde e institucional",
+    description:
+      "Clínica e Consultório Médico e Odontológico (clínicas médicas, consultórios em geral, unidades de hemodiálise, ambulatórios, postos de saúde, todos sem internação)",
+  },
+  "I-1": {
+    group: "industrial",
+    description:
+      "Locais Onde A Carga de Incêndio É de Até 300 MJ/m² (indústrias de aço, artigos de metal, gesso, cimento, concreto, cerâmica, olarias, ferramentas, joias, serralheria, louças, vidro, acessórios automotivos, bebidas não alcoólicas, cervejarias, conservas, laticínios)",
+  },
+  "I-2": {
+    group: "industrial",
+    description:
+      "Locais Com Média Carga de Incêndio (indústrias de automóveis, bebidas destiladas, instrumentos musicais, móveis, marcenarias, alimentos, artigos em couro e plástico, baterias, calçados, colchões, eletrodomésticos, óleos comestíveis, tintas látex, têxteis)",
+  },
+  "I-3": {
+    group: "industrial",
+    description:
+      "Locais Com Alta Ou Altíssima Carga de Incêndio (indústrias de inflamáveis, combustíveis, materiais oxidantes, ceras, espumas, grãos e cereais, tintas, vernizes e solventes, borracha, madeira, papelão, resinas, gráficas, estaleiros, produtos de limpeza, processamento de lixo)",
+  },
+  "J-1": {
+    group: "depósito",
+    description:
+      "Depósitos de Material Incombustível (tijolos, pedras, areias, cimentos e metais, sem processo industrial e sem embalagem)",
+  },
+  "J-2": {
+    group: "depósito",
+    description:
+      "Depósito Com Baixa Carga de Incêndio (galpões, centros de distribuição e centros atacadistas com carga de incêndio de até 300 MJ/m²)",
+  },
+  "J-3": {
+    group: "depósito",
+    description:
+      "Depósito Com Média Carga de Incêndio (galpões, centros de distribuição e centros atacadistas com carga de incêndio entre 300 e 1.200 MJ/m²)",
+  },
+  "J-4": {
+    group: "depósito",
+    description:
+      "Depósito Com Alta Ou Altíssima Carga de Incêndio (galpões, centros de distribuição e centros atacadistas com carga de incêndio acima de 1.200 MJ/m²)",
+  },
+  "K-1": {
+    group: "energia",
+    description: "Central de Transmissão e Distribuição de Energia (subestações elétricas)",
+  },
+  "K-2": {
+    group: "energia",
+    description: "Usinas (hidroelétrica, termoelétrica, usina fotovoltaica, usina eólica)",
+  },
+  "L-1": { group: "explosivo", description: "Comércio de Fogos de Artifício e Assemelhados" },
+  "L-2": { group: "explosivo", description: "Indústria de Material Explosivo" },
+  "L-3": { group: "explosivo", description: "Depósito de Material Explosivo" },
   "M-1": { group: "especial", description: "Túnel" },
-  "M-2": { group: "especial", description: null },
-  "M-3": { group: "especial", description: null },
-  "M-4": { group: "especial", description: null },
-  "M-5": { group: "especial", description: null },
-  "M-6": { group: "especial", description: null },
-  "M-7": { group: "especial", description: null },
-  "M-8": { group: "especial", description: null },
-  "M-9": { group: "especial", description: null },
-  "M-10": { group: "especial", description: null },
-  "M-11": { group: "especial", description: null },
+  "M-2": {
+    group: "especial",
+    description:
+      "Líquido Ou Gás Inflamáveis Ou Combustíveis (produção, manipulação, armazenamento e distribuição, exceto postos de revenda de GLP)",
+  },
+  "M-3": {
+    group: "especial",
+    description:
+      "Central de TV, Rádio, Computação (centros de comunicação, centrais de transmissão, centros de computação, estações de rádio ou TV)",
+  },
+  "M-4": {
+    group: "especial",
+    description: "Canteiro de Obras (locais em construção ou demolição)",
+  },
+  "M-5": {
+    group: "especial",
+    description:
+      "Silos, Moegas, Correias Transportadoras e Secadores (secadores de grãos ou folhas e similares)",
+  },
+  "M-6": {
+    group: "especial",
+    description:
+      "Floresta Nativa Ou de Cultivo (floresta, reserva ecológica, parque florestal)",
+  },
+  "M-7": {
+    group: "especial",
+    description: "Pátio de Contêineres (área aberta destinada a armazenamento de contêineres)",
+  },
+  "M-8": { group: "especial", description: "Posto de Revenda de GLP Risco I (PRGLP classes I, II, III e IV)" },
+  "M-9": {
+    group: "especial",
+    description: "Posto de Revenda de GLP Risco II (PRGLP classes V, VI, VII e Especial)",
+  },
+  "M-10": {
+    group: "especial",
+    description: "Minas Subterrâneas (mina para exploração de jazidas ou minérios)",
+  },
+  "M-11": {
+    group: "especial",
+    description:
+      "Estufas e Galpões (estufas para secagem, galpões para estocagem de forrageiras ou fardos)",
+  },
 };
 
 /** Aplica a mesma regra a um conjunto de códigos que o fluxo agrupou. */
