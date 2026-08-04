@@ -19,6 +19,8 @@ type CourseSplitSectionProps = {
   ctaHref: string;
   /** Quando true, abre o link em nova aba (WhatsApp/Hotmart e outros destinos externos). */
   ctaExternal?: boolean;
+  /** Prioriza o carregamento da imagem (LCP above-the-fold). */
+  imagePriority?: boolean;
 };
 
 export function CourseSplitSection({
@@ -32,6 +34,7 @@ export function CourseSplitSection({
   ctaLabel,
   ctaHref,
   ctaExternal = false,
+  imagePriority = false,
 }: CourseSplitSectionProps) {
   return (
     <section className={cn(bg === "surface" ? "bg-brand-surface" : "bg-white")}>
@@ -48,6 +51,7 @@ export function CourseSplitSection({
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
             className="object-cover"
+            priority={imagePriority}
           />
         </div>
 

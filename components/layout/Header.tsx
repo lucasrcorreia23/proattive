@@ -2,19 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Logo } from "@/components/ui/Logo";
 import { assets } from "@/lib/assets";
-import {
-  MATRICULA_PATH,
-  MATRICULA_QUOTE_HREF,
-  NAV_LINKS,
-  QUOTE_SECTION_ID,
-  SITE,
-} from "@/lib/constants";
+import { arieleWhatsappHref, NAV_LINKS, SITE } from "@/lib/constants";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -35,20 +28,12 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
+const CONTACT_HREF = arieleWhatsappHref(
+  "Olá! Vim pelo site e gostaria de entrar em contato.",
+);
+
 export function Header() {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  function handleContact() {
-    // Na landing do curso, o quote wizard existe na própria página → scroll suave.
-    // Nas demais páginas (ex.: nova home), navega até a seção na página realocada.
-    if (pathname === MATRICULA_PATH) {
-      document.getElementById(QUOTE_SECTION_ID)?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      router.push(MATRICULA_QUOTE_HREF);
-    }
-  }
 
   return (
     <header className="relative border-b border-white/60 bg-white/75 backdrop-blur-md">
@@ -117,9 +102,14 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <Button variant="default" className="shrink-0 uppercase" onClick={handleContact}>
+          <ButtonLink
+            href={CONTACT_HREF}
+            className="shrink-0"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             ENTRE EM CONTATO
-          </Button>
+          </ButtonLink>
         </div>
       </div>
 
@@ -168,16 +158,15 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <Button
-              variant="default"
-              className="mt-2 uppercase"
-              onClick={() => {
-                setOpen(false);
-                handleContact();
-              }}
+            <ButtonLink
+              href={CONTACT_HREF}
+              className="mt-2"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
             >
               ENTRE EM CONTATO
-            </Button>
+            </ButtonLink>
           </nav>
         </div>
       )}

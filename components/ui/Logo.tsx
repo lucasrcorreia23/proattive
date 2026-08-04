@@ -15,6 +15,7 @@ export function Logo({ className, variant = "header" }: LogoProps) {
           src={assets.logo.main}
           alt="ProAttive Engenharia Contra-Incêndio"
           fill
+          sizes="217px"
           className="object-contain object-left"
           priority
         />
@@ -28,6 +29,7 @@ export function Logo({ className, variant = "header" }: LogoProps) {
         src={assets.logo.full}
         alt="ProAttive Engenharia Contra-Incêndio"
         fill
+        sizes="(min-width: 640px) 250px, 220px"
         className="object-contain"
         priority
       />

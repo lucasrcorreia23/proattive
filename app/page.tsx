@@ -8,6 +8,7 @@ import {
   arieleWhatsappHref,
   deiseWhatsappHref,
   HOTMART_CARROS_ELETRICOS_HREF,
+  MATRICULA_PATH,
 } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -56,10 +57,8 @@ const COURSES: CourseSection[] = [
           "Monitores, instrutores de academias, buffets infantis e profissionais de lazer.",
       },
     ],
-    ctaHref: arieleWhatsappHref(
-      "Olá! Tenho interesse no Curso Brigada de Incêndio e Lei Lucas.",
-    ),
-    ctaExternal: true,
+    // Landing do curso + filtro de orçamento.
+    ctaHref: MATRICULA_PATH,
   },
   {
     imageSrc: assets.courses.eletricos,
@@ -117,11 +116,12 @@ export default function Home() {
     <>
       <Header />
       <main className="flex-1">
-        {COURSES.map((course) => (
+        {COURSES.map((course, index) => (
           <CourseSplitSection
             key={course.title}
             {...course}
             ctaLabel="MATRICULE-SE AGORA"
+            imagePriority={index === 0}
           />
         ))}
 
