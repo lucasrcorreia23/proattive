@@ -17,7 +17,7 @@ export type LevelShare = { level: CourseLevel; share: number };
 export type OccupancyRule =
   /** Isento independente da população (J-1, M-4, M-11). */
   | { kind: "always-exempt" }
-  /** Isento abaixo de `exemptBelow`; acima disso, 1 brigadista a cada `perPeople`. */
+  /** Isento até `exemptBelow` inclusive; acima disso, 1 brigadista a cada `perPeople`. */
   | { kind: "ratio"; exemptBelow: number; perPeople: number; levels: LevelShare[] }
   /** Sem isenção: a brigada é um percentual da população fixa. */
   | { kind: "percent"; percent: number; levels: LevelShare[] }

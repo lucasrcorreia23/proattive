@@ -143,8 +143,8 @@ function requiredResult(
  * Fórmula confirmada por escrito pela Ariele: `teto(população / N)`.
  * A faixa de isenção (`exemptBelow`) define QUEM é dispensado, mas NÃO é
  * subtraída da população no cálculo. Exemplos dela:
- *   - D-1 (isento < 10, 1 a cada 15) com 40 funcionários → 40/15 = 2,66 → 3.
- *   - I-2 (isento < 10, 1 a cada 10) com 80 funcionários → 80/10 = 8.
+ *   - D-1 (isento ≤ 10, 1 a cada 15) com 40 funcionários → 40/15 = 2,66 → 3.
+ *   - I-2 (isento ≤ 10, 1 a cada 10) com 80 funcionários → 80/10 = 8.
  */
 function applyRule(
   rule: Occupancy["rule"],
@@ -162,7 +162,7 @@ function applyRule(
       return requiredResult(base, Math.ceil(population * rule.percent), rule.levels);
 
     case "ratio": {
-      if (population < rule.exemptBelow) return exemptResult(base);
+      if (population <= rule.exemptBelow) return exemptResult(base);
       return requiredResult(base, Math.ceil(population / rule.perPeople), rule.levels);
     }
 

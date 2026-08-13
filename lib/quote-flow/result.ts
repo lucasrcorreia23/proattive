@@ -35,10 +35,8 @@ function toNumber(value: string | undefined): number {
  * o número é 3 mesmo com a conta da ocupação dando menos.
  */
 export const MINIMUM_BRIGADE_NOTICE =
-  `Por que ${MINIMUM_BRIGADE_MEMBERS} brigadistas: pela sua ocupação o cálculo daria menos que isso, ` +
-  `mas a norma fixa um piso de ${MINIMUM_BRIGADE_MEMBERS} sempre que há exigência de brigada — ` +
-  `por isso o número aqui já é ${MINIMUM_BRIGADE_MEMBERS}. ` +
-  "Art. 16 da IN 28, § 2º: “Quando houver a exigência de brigadista orgânico, o número mínimo " +
+  `A quantidade foi definida como ${MINIMUM_BRIGADE_MEMBERS} pois a norma estabelece este número como o mínimo exigido. ` +
+  "Conforme o Art. 16 da IN 28, § 2º: “Quando houver a exigência de brigadista orgânico, o número mínimo " +
   "a ser implementado será de 03 (três) brigadistas orgânicos, independente do previsto no caput " +
   "deste artigo.”";
 

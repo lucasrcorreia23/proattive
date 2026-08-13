@@ -25,15 +25,23 @@ import { HOTMART_BRIGADISTA_HREF } from "../constants.ts";
 
 describe("isenção", () => {
   it("é isento abaixo do limite da ocupação", () => {
-    // D-1: isento < 10.
+    // D-1: isento ≤ 10.
     assert.equal(computeCompanyBrigade("D-1", 9).exempt, true);
   });
 
-  it("deixa de ser isento exatamente no limite", () => {
-    // A faixa de isenção só diz QUEM é isento; ela não é descontada da conta.
+  it("é isento exatamente no limite da ocupação", () => {
+    // O número do Figma é a população máxima para isenção (inclusiva).
     const result = computeCompanyBrigade("D-1", 10);
-    assert.equal(result.exempt, false, "no limite já há exigência de brigada");
-    // teto(10/15) = 1, elevado ao piso legal de 3 (Art. 16 da IN 28, § 2º).
+    assert.equal(result.exempt, true, "no limite ainda é isento");
+    assert.equal(result.total, 0);
+    assert.equal(result.minimumApplied, false);
+  });
+
+  it("deixa de ser isento acima do limite", () => {
+    // D-1: isento ≤ 10 → com 11 já há exigência de brigada.
+    const result = computeCompanyBrigade("D-1", 11);
+    assert.equal(result.exempt, false, "acima do limite há exigência de brigada");
+    // teto(11/15) = 1, elevado ao piso legal de 3 (Art. 16 da IN 28, § 2º).
     assert.equal(result.total, 3);
     assert.equal(result.minimumApplied, true);
   });
@@ -67,7 +75,7 @@ describe("razão teto(população / N) — a isenção não é subtraída", () =
   });
 
   it("arredonda para cima", () => {
-    // M-3: isento < 5, 1 para cada 15 → teto(46/15) = teto(3,06) = 4.
+    // M-3: isento ≤ 5, 1 para cada 15 → teto(46/15) = teto(3,06) = 4.
     // Acima do piso de 3, para o arredondamento aparecer sozinho no resultado.
     assert.equal(computeCompanyBrigade("M-3", 46).total, 4);
     assert.equal(computeCompanyBrigade("M-3", 46).minimumApplied, false);
@@ -310,11 +318,11 @@ describe("resultado exibido ao cliente", () => {
   });
 
   it("a mensagem da Ariele leva o número JÁ com o piso aplicado", () => {
-    // D-1 com 10: a conta dá 1, a tela mostra 3 — a mensagem tem que dizer 3.
+    // D-1 com 11: a conta dá 1, a tela mostra 3 — a mensagem tem que dizer 3.
     const compra = buildQuoteResult({
       perfil: "empresa",
       ocupacao: "D-1",
-      qtd_funcionarios: "10",
+      qtd_funcionarios: "11",
     });
     const compraText = decodeURIComponent(compra.ctaHref);
     assert.match(compraText, /preciso de 3 brigadista\(s\): 3 Básico/);
@@ -358,11 +366,11 @@ describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
   });
 
   it("cálculo que dá 1 vira 3 e carrega o aviso", () => {
-    // D-1 com 10 funcionários: teto(10/15) = 1 brigadista.
+    // D-1 com 11 funcionários: teto(11/15) = 1 brigadista.
     const result = buildQuoteResult({
       perfil: "empresa",
       ocupacao: "D-1",
-      qtd_funcionarios: "10",
+      qtd_funcionarios: "11",
     });
     assert.equal(result.brigade?.exempt, false);
     assert.equal(result.brigade?.total, 3, "o número exibido é o mínimo legal");
@@ -374,7 +382,7 @@ describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
   });
 
   it("cálculo que dá 2 vira 3 e carrega o aviso", () => {
-    // M-3: isento < 5, 1 a cada 15 → teto(21/15) = 2.
+    // M-3: isento ≤ 5, 1 a cada 15 → teto(21/15) = 2.
     const result = buildQuoteResult({
       perfil: "empresa",
       ocupacao: "M-3",
@@ -475,9 +483,9 @@ describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
   });
 
   it("redistribui os níveis sobre o total elevado, somando 3", () => {
-    // I-2 com 10 funcionários: teto(10/10) = 1, que sozinho ficaria todo no
-    // Básico. Com o piso, os 3 são divididos pelos MESMOS shares (50/50).
-    const result = computeCompanyBrigade("I-2", 10);
+    // I-2 com 11 funcionários: teto(11/10) = 2 → piso eleva a 3, divididos
+    // pelos MESMOS shares (50/50).
+    const result = computeCompanyBrigade("I-2", 11);
     assert.equal(result.total, 3);
     assert.deepEqual(result.breakdown, [
       { level: "basico", count: 2 },
@@ -489,7 +497,7 @@ describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
   });
 
   it("também avisa no desfecho de orçamento (nível Avançado)", () => {
-    // M-9: isento < 5, 1 a cada 10, tudo Avançado → teto(12/10) = 2 → 3.
+    // M-9: isento ≤ 5, 1 a cada 10, tudo Avançado → teto(12/10) = 2 → 3.
     const result = buildQuoteResult({
       perfil: "empresa",
       ocupacao: "M-9",
@@ -502,7 +510,7 @@ describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
   });
 
   it("o piso pode fazer surgir o nível Avançado e mandar o caso para orçamento", () => {
-    // J-4 (isento < 5, 1 a cada 10, 50% Intermediário / 50% Avançado) com 10
+    // J-4 (isento ≤ 5, 1 a cada 10, 50% Intermediário / 50% Avançado) com 10
     // funcionários: a conta dava 1, que caía todo no Intermediário e vendia
     // online. Com 3, a metade Avançado aparece — e Avançado é presencial.
     const result = buildQuoteResult({
@@ -523,7 +531,10 @@ describe("piso legal de 3 brigadistas (Art. 16, § 2º da IN 28)", () => {
   it("o aviso explica o número exibido, sem contradizê-lo", () => {
     // Regressão do bug que motivou a mudança: o texto não pode mandar formar um
     // número diferente do que está na tela.
-    assert.match(MINIMUM_BRIGADE_NOTICE, /Por que 3 brigadistas/);
+    assert.match(
+      MINIMUM_BRIGADE_NOTICE,
+      /A quantidade foi definida como 3 pois a norma estabelece este número como o mínimo exigido/,
+    );
     assert.match(
       MINIMUM_BRIGADE_NOTICE,
       /“Quando houver a exigência de brigadista orgânico, o número mínimo a ser implementado será de 03 \(três\) brigadistas orgânicos, independente do previsto no caput deste artigo\.”/,
