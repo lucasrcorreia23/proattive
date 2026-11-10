@@ -7,7 +7,7 @@ import { useState } from "react";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Logo } from "@/components/ui/Logo";
 import { assets } from "@/lib/assets";
-import { arieleWhatsappHref, NAV_LINKS, SITE } from "@/lib/constants";
+import { NAV_LINKS, SITE } from "@/lib/constants";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -28,9 +28,8 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-const CONTACT_HREF = arieleWhatsappHref(
-  "Olá! Vim pelo site e gostaria de entrar em contato.",
-);
+const CONTACT_HREF =
+  "https://wa.me/5548999681883?text=Ol%C3%A1%21%20Vim%20do%20site.%20Podemos%20falar%20agora%3F";
 
 export function Header() {
   const [open, setOpen] = useState(false);
